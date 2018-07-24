@@ -29,9 +29,9 @@ namespace DemoClient
 
 			using (var ctx = new DbContext(cnString))
 			{
-				var tables = DbDataProvider.GetTables(ctx);
+				var tables = DataProvider.GetTables(ctx);
 
-				foreach (var table in tables)
+				foreach (var table in tables.Take(1))
 				{
 					//Console.WriteLine(table.Name + @" -> " + table.Columns.Length);
 					//foreach (var column in table.Columns)
@@ -43,12 +43,31 @@ namespace DemoClient
 					var buffer = new StringBuilder();
 
 					var tableConfig = projectConfig.GetTableConfig(table.Name);
-					SqlGenerator.GenerateSelect(buffer, table, tableConfig);
 
 					buffer.Clear();
-					CodeGenerator.GenerateClass(buffer, table, projectConfig.GetClassConfig(table.Name), tableConfig);
-
+					SqlGenerator.Select(buffer, table, tableConfig);
 					Console.WriteLine(buffer.ToString());
+					Console.WriteLine();
+
+					buffer.Clear();
+					SqlGenerator.Insert(buffer, table, tableConfig);
+					Console.WriteLine(buffer.ToString());
+					Console.WriteLine();
+
+					buffer.Clear();
+					SqlGenerator.Update(buffer, table, tableConfig);
+					Console.WriteLine(buffer.ToString());
+					Console.WriteLine();
+
+					buffer.Clear();
+					SqlGenerator.Delete(buffer, table, tableConfig);
+					Console.WriteLine(buffer.ToString());
+					Console.WriteLine();
+
+
+					//buffer.Clear();
+					//CodeGenerator.GenerateClass(buffer, table, projectConfig.GetClassConfig(table.Name), tableConfig);
+					//Console.WriteLine(buffer.ToString());
 
 					code.AppendLine(buffer.ToString());
 				}
@@ -61,7 +80,7 @@ namespace DemoClient
 
 
 			//Console.WriteLine();
-			//foreach (var t in DbDataProvider.AllTypes)
+			//foreach (var t in DataProvider.AllTypes)
 			//{
 			//	Console.WriteLine(t);
 			//}

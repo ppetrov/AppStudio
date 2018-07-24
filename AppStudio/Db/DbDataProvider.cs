@@ -6,7 +6,7 @@ using AppStudio.Db.Data;
 
 namespace AppStudio
 {
-	public static class DbDataProvider
+	public static class DataProvider
 	{
 		public static Table[] GetTables(IDbContext context)
 		{
