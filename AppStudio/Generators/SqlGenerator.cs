@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using AppStudio.Config;
 using AppStudio.Db;
@@ -15,19 +17,7 @@ namespace AppStudio.Generators
 
 			buffer.Append(@"SELECT");
 			buffer.Append(@" ");
-
-			var addComma = false;
-			foreach (var column in config.GetSelectColumns(table.Columns))
-			{
-				if (addComma)
-				{
-					buffer.Append(',');
-					buffer.Append(@" ");
-				}
-				buffer.Append(column.Name);
-				addComma = true;
-			}
-
+			AddColumns(buffer, config.GetSelectColumns(table.Columns));
 			buffer.Append(@" ");
 			buffer.Append(@"FROM");
 			buffer.Append(@" ");
@@ -46,36 +36,16 @@ namespace AppStudio.Generators
 			buffer.Append(@" ");
 			buffer.Append(table.Name);
 			buffer.AppendLine();
-			buffer.Append("\t");
+			buffer.Append('\t');
 			buffer.Append(@"(");
-			var addComma = false;
-			foreach (var column in table.Columns)
-			{
-				if (addComma)
-				{
-					buffer.Append(',');
-					buffer.Append(@" ");
-				}
-				buffer.Append(column.Name);
-				addComma = true;
-			}
+			AddColumns(buffer, table.Columns);
 			buffer.Append(@")");
 			buffer.AppendLine();
 			buffer.Append(@"VALUES");
 			buffer.AppendLine();
 			buffer.Append('\t');
 			buffer.Append(@"(");
-			addComma = false;
-			foreach (var column in table.Columns)
-			{
-				if (addComma)
-				{
-					buffer.Append(',');
-					buffer.Append(@" ");
-				}
-				AddParameter(buffer, column);
-				addComma = true;
-			}
+			AddParameters(buffer, table.Columns);
 			buffer.Append(@")");
 		}
 
@@ -91,43 +61,11 @@ namespace AppStudio.Generators
 			buffer.AppendLine();
 			buffer.Append(@"SET");
 			buffer.AppendLine();
-
-			var addComma = false;
-			foreach (var column in table.Columns)
-			{
-				if (column.IsPrimaryKey) continue;
-				if (addComma)
-				{
-					buffer.Append(',');
-					buffer.AppendLine();
-				}
-				buffer.Append('\t');
-				buffer.Append(column.Name);
-				buffer.Append(@" = ");
-				AddParameter(buffer, column);
-				addComma = true;
-			}
-
+			AddColumnToParamAssignment(buffer, table.Columns.Where(c => !c.IsPrimaryKey));
 			buffer.AppendLine();
 			buffer.Append(@"WHERE");
 			buffer.AppendLine();
-
-			addComma = false;
-			foreach (var column in table.Columns)
-			{
-				if (!column.IsPrimaryKey) continue;
-				if (addComma)
-				{
-					buffer.Append(',');
-					buffer.AppendLine();
-				}
-				buffer.Append('\t');
-				buffer.Append(column.Name);
-				buffer.Append(@" = ");
-				AddParameter(buffer, column);
-				addComma = true;
-			}
-
+			AddColumnToParamAssignment(buffer, table.Columns.Where(c => c.IsPrimaryKey));
 		}
 
 		public static void Delete(StringBuilder buffer, Table table, TableConfig config)
@@ -144,30 +82,58 @@ namespace AppStudio.Generators
 			buffer.AppendLine();
 			buffer.Append(@"WHERE");
 			buffer.AppendLine();
+			AddColumnToParamAssignment(buffer, table.Columns.Where(c => c.IsPrimaryKey));
+		}
 
+		private static void AddColumns(StringBuilder buffer, IEnumerable<Column> columns)
+		{
+			Add(buffer, columns, (b, c) => b.Append(c.Name));
+		}
+
+		private static void AddParameters(StringBuilder buffer, IEnumerable<Column> columns)
+		{
+			Add(buffer, columns, AddParameter);
+		}
+
+		private static void Add(StringBuilder buffer, IEnumerable<Column> columns, Action<StringBuilder, Column> appender)
+		{
 			var addComma = false;
-			foreach (var column in table.Columns)
+			foreach (var column in columns)
 			{
-				if (!column.IsPrimaryKey) continue;
 				if (addComma)
 				{
-					buffer.Append(',');
+					buffer.Append(@",");
+					buffer.Append(@" ");
+				}
+
+				appender(buffer, column);
+				addComma = true;
+			}
+		}
+
+		private static void AddColumnToParamAssignment(StringBuilder buffer, IEnumerable<Column> columns)
+		{
+			var addComma = false;
+			foreach (var column in columns)
+			{
+				if (addComma)
+				{
+					buffer.Append(@",");
 					buffer.AppendLine();
 				}
+
 				buffer.Append('\t');
 				buffer.Append(column.Name);
 				buffer.Append(@" = ");
 				AddParameter(buffer, column);
 				addComma = true;
 			}
-
 		}
 
 		private static void AddParameter(StringBuilder buffer, Column column)
 		{
-			buffer.Append('@');
-			buffer.Append('p');
-			buffer.Append(NameProvider.GetVariableName(NameProvider.GetPropertyName(column.Name)));
+			buffer.Append(@"@p");
+			buffer.Append(NameProvider.GetPropertyName(column.Name));
 		}
 	}
 }
