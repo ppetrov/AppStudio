@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using AppStudio.Data;
 using AppStudio.Db;
-using AppStudio.Db.Data;
 
 namespace AppStudio
 {

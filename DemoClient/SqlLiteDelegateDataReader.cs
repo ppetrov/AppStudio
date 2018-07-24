@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Data.SQLite;
-using AppStudio.Db.Data;
+using AppStudio.Data;
 
 namespace DemoClient
 {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace AppStudio.Db.Data
+namespace AppStudio.Data
 {
 	public sealed class Query<T>
 	{

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using AppStudio.Config;
+using AppStudio.Generators;
 
 namespace AppStudio.Db
 {
@@ -83,6 +84,7 @@ namespace AppStudio.Db
 
 			if (readOnly)
 			{
+				// Constructor
 				buffer.AppendLine();
 				buffer.Append('\t');
 				buffer.Append(@"public");
@@ -142,6 +144,39 @@ namespace AppStudio.Db
 
 			buffer.AppendLine(@"}");
 		}
+
+		public static void GenerateGetAll(StringBuilder buffer, Table table, ClassConfig config,
+			TableConfig tableConfig)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (table == null) throw new ArgumentNullException(nameof(table));
+			if (config == null) throw new ArgumentNullException(nameof(config));
+			if (tableConfig == null) throw new ArgumentNullException(nameof(tableConfig));
+
+			var template = @"
+public static List<{1}> Get{2}(IDbContext context)
+{{
+	if (context == null) throw new ArgumentNullException(nameof(context));
+
+	var items = new List<{1}>();
+
+	var query = new Query<{1}>(@""{0}"", r =>
+	{{
+		return null;
+	}});
+	foreach (var item in context.Execute(query))
+	{{
+		items.Add(item);
+	}}
+
+	return items;
+}}";
+			var sql = new StringBuilder();
+			SqlGenerator.Select(sql, table, tableConfig);
+			buffer.AppendFormat(template, sql.ToString(), config.ClassName, config.ClassName);
+		}
+
+
 
 		private static KeyValuePair<string, bool> MapType(SqlDataType dataType)
 		{

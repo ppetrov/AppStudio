@@ -44,38 +44,44 @@ namespace DemoClient
 
 					var tableConfig = projectConfig.GetTableConfig(table.Name);
 
-					buffer.Clear();
-					SqlGenerator.Select(buffer, table, tableConfig);
-					Console.WriteLine(buffer.ToString());
-					Console.WriteLine();
-
-					buffer.Clear();
-					SqlGenerator.Insert(buffer, table, tableConfig);
-					Console.WriteLine(buffer.ToString());
-					Console.WriteLine();
-
-					buffer.Clear();
-					SqlGenerator.Update(buffer, table, tableConfig);
-					Console.WriteLine(buffer.ToString());
-					Console.WriteLine();
-
-					buffer.Clear();
-					SqlGenerator.Delete(buffer, table, tableConfig);
-					Console.WriteLine(buffer.ToString());
-					Console.WriteLine();
-
+					//buffer.Clear();
+					//SqlGenerator.Select(buffer, table, tableConfig);
+					//Console.WriteLine(buffer.ToString());
+					//Console.WriteLine();
 
 					//buffer.Clear();
-					//CodeGenerator.GenerateClass(buffer, table, projectConfig.GetClassConfig(table.Name), tableConfig);
+					//SqlGenerator.Insert(buffer, table, tableConfig);
 					//Console.WriteLine(buffer.ToString());
+					//Console.WriteLine();
+
+					//buffer.Clear();
+					//SqlGenerator.Update(buffer, table, tableConfig);
+					//Console.WriteLine(buffer.ToString());
+					//Console.WriteLine();
+
+					//buffer.Clear();
+					//SqlGenerator.Delete(buffer, table, tableConfig);
+					//Console.WriteLine(buffer.ToString());
+					//Console.WriteLine();
+
+
+					buffer.Clear();
+					CodeGenerator.GenerateClass(buffer, table, projectConfig.GetClassConfig(table.Name), tableConfig);
+					Console.WriteLine(buffer.ToString());
+					Console.WriteLine();
+
+					buffer.Clear();
+					CodeGenerator.GenerateGetAll(buffer, table, projectConfig.GetClassConfig(table.Name), tableConfig);
+					Console.WriteLine(buffer.ToString());
+					Console.WriteLine();
 
 					code.AppendLine(buffer.ToString());
 				}
 				ctx.Complete();
 			}
 
-			var t = code.ToString();
-			Console.WriteLine(t.Length);
+			//var t = code.ToString();
+			//Console.WriteLine(t.Length);
 
 
 

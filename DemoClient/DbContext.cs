@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
 using System.Diagnostics;
-using AppStudio.Db.Data;
+using AppStudio.Data;
 
 namespace DemoClient
 {

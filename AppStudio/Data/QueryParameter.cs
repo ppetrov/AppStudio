@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AppStudio.Db.Data
+namespace AppStudio.Data
 {
 	public sealed class QueryParameter
 	{
