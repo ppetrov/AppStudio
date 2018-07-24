@@ -9,7 +9,7 @@ namespace AppStudio
 		{
 			if (value == null) throw new ArgumentNullException(nameof(value));
 
-			return GetName(value);
+			return GetName(value, true);
 		}
 
 		public static string GetPropertyName(string value)
@@ -24,7 +24,7 @@ namespace AppStudio
 			return char.ToLowerInvariant(value[0]) + value.Substring(1);
 		}
 
-		private static string GetName(string value)
+		private static string GetName(string value, bool removeTrailingS = false)
 		{
 			if (value == null) throw new ArgumentNullException(nameof(value));
 
@@ -50,6 +50,14 @@ namespace AppStudio
 
 				buffer.Append(symbol);
 				toUpper = false;
+			}
+
+			if (removeTrailingS)
+			{
+				if (char.ToLowerInvariant(buffer[buffer.Length - 1]) == 's')
+				{
+					buffer.Remove(buffer.Length - 1, 1);
+				}
 			}
 
 			return buffer.ToString();

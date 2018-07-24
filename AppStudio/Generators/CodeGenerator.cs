@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using AppStudio.Config;
 using AppStudio.Generators;
@@ -41,12 +42,11 @@ namespace AppStudio.Db
 			}
 		}
 
-		public static void GenerateClass(StringBuilder buffer, Table table, ClassConfig config, TableConfig tableConfig)
+		public static void GenerateClass(StringBuilder buffer, Table table, EntityConfig config)
 		{
 			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 			if (table == null) throw new ArgumentNullException(nameof(table));
 			if (config == null) throw new ArgumentNullException(nameof(config));
-			if (tableConfig == null) throw new ArgumentNullException(nameof(tableConfig));
 
 			buffer.Append(@"public");
 			buffer.Append(@" ");
@@ -60,7 +60,7 @@ namespace AppStudio.Db
 			var readOnly = config.AsReadOnly;
 			var properties = new List<ClassProperty>();
 
-			foreach (var column in tableConfig.GetSelectColumns(table.Columns))
+			foreach (var column in config.GetSelectColumns(table.Columns))
 			{
 				properties.Add(ClassProperty.From(column, readOnly));
 			}
@@ -145,13 +145,11 @@ namespace AppStudio.Db
 			buffer.AppendLine(@"}");
 		}
 
-		public static void GenerateGetAll(StringBuilder buffer, Table table, ClassConfig config,
-			TableConfig tableConfig)
+		public static void GenerateGetAll(StringBuilder buffer, Table table, EntityConfig config)
 		{
 			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 			if (table == null) throw new ArgumentNullException(nameof(table));
 			if (config == null) throw new ArgumentNullException(nameof(config));
-			if (tableConfig == null) throw new ArgumentNullException(nameof(tableConfig));
 
 			var template = @"
 public static List<{1}> Get{2}(IDbContext context)
@@ -162,7 +160,7 @@ public static List<{1}> Get{2}(IDbContext context)
 
 	var query = new Query<{1}>(@""{0}"", r =>
 	{{
-		return null;
+		{3}
 	}});
 	foreach (var item in context.Execute(query))
 	{{
@@ -171,12 +169,39 @@ public static List<{1}> Get{2}(IDbContext context)
 
 	return items;
 }}";
-			var sql = new StringBuilder();
-			SqlGenerator.Select(sql, table, tableConfig);
-			buffer.AppendFormat(template, sql.ToString(), config.ClassName, config.ClassName);
+			var creator = new StringBuilder();
+			var properties = new List<ClassProperty>(table.Columns.Length);
+			foreach (var column in config.GetSelectColumns(table.Columns))
+			{
+				var property = ClassProperty.From(column, config.AsReadOnly);
+
+				properties.Add(property);
+
+				if (creator.Length > 0)
+				{
+					creator.AppendLine();
+					creator.Append("\t\t");
+				}
+				creator.Append(@"var");
+				creator.Append(@" ");
+				creator.Append(property.VariableName);
+				creator.Append(@" = ");
+				creator.Append(GetDefaultValue(column));
+				creator.Append(@";");
+			}
+
+
+			creator.AppendLine();
+			creator.Append("\t\t");
+			creator.AppendFormat(@"return new {0}({1});", config.ClassName, string.Join(@", ", properties.Select(p => p.VariableName)));
+			//var a = Query.GetLong(r, -1);
+			//var b = Query.GetLong(r, -1);
+			//return new ActivationCompliance("", 0, "", "");
+
+			var selectSql = new StringBuilder();
+			SqlGenerator.Select(selectSql, table, config);
+			buffer.AppendFormat(template, selectSql.ToString(), config.ClassName, config.ClassPluralName, creator.ToString());
 		}
-
-
 
 		private static KeyValuePair<string, bool> MapType(SqlDataType dataType)
 		{

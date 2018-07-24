@@ -9,7 +9,7 @@ namespace AppStudio.Generators
 {
 	public static class SqlGenerator
 	{
-		public static void Select(StringBuilder buffer, Table table, TableConfig config)
+		public static void Select(StringBuilder buffer, Table table, EntityConfig config)
 		{
 			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 			if (table == null) throw new ArgumentNullException(nameof(table));
@@ -24,7 +24,7 @@ namespace AppStudio.Generators
 			buffer.Append(table.Name);
 		}
 
-		public static void Insert(StringBuilder buffer, Table table, TableConfig config)
+		public static void Insert(StringBuilder buffer, Table table, EntityConfig config)
 		{
 			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 			if (table == null) throw new ArgumentNullException(nameof(table));
@@ -49,7 +49,7 @@ namespace AppStudio.Generators
 			buffer.Append(@")");
 		}
 
-		public static void Update(StringBuilder buffer, Table table, TableConfig config)
+		public static void Update(StringBuilder buffer, Table table, EntityConfig config)
 		{
 			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 			if (table == null) throw new ArgumentNullException(nameof(table));
@@ -68,7 +68,7 @@ namespace AppStudio.Generators
 			AddColumnToParamAssignment(buffer, table.Columns.Where(c => c.IsPrimaryKey));
 		}
 
-		public static void Delete(StringBuilder buffer, Table table, TableConfig config)
+		public static void Delete(StringBuilder buffer, Table table, EntityConfig config)
 		{
 			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 			if (table == null) throw new ArgumentNullException(nameof(table));
