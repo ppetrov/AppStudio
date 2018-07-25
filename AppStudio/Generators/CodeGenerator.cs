@@ -30,7 +30,7 @@ namespace AppStudio.Generators
 				this.VariableDeclaration = type + @" " + this.VariableName;
 			}
 
-			public static ClassProperty From(Column column, Table[] referenceTables, ProjectConfig config, bool readOnly)
+			public static ClassProperty From(Column column, Table[] referenceTables, ProjectConfig config)
 			{
 				if (column == null) throw new ArgumentNullException(nameof(column));
 				if (referenceTables == null) throw new ArgumentNullException(nameof(referenceTables));
@@ -42,11 +42,7 @@ namespace AppStudio.Generators
 					? NameProvider.GetPropertyName(column.Name)
 					: NameProvider.GetPropertyName(type.Key);
 
-				if (readOnly)
-				{
-					return new ClassProperty(type.Key, type.Value, name, @"{ get; }");
-				}
-				return new ClassProperty(type.Key, type.Value, name, @"{ get; set; }", @" = " + GetDefaultValue(column) + @";");
+				return new ClassProperty(type.Key, type.Value, name, @"{ get; }");
 			}
 		}
 
@@ -69,12 +65,11 @@ namespace AppStudio.Generators
 
 			var referenceTables = config.GetReferenceTables(table);
 
-			var readOnly = entityConfig.UseReadOnlyProperties;
 			var properties = new List<ClassProperty>();
 
 			foreach (var column in entityConfig.GetSelectColumns(table.Columns))
 			{
-				properties.Add(ClassProperty.From(column, referenceTables, config, readOnly));
+				properties.Add(ClassProperty.From(column, referenceTables, config));
 			}
 
 			foreach (var property in properties)
@@ -94,7 +89,7 @@ namespace AppStudio.Generators
 				buffer.AppendLine();
 			}
 
-			if (readOnly)
+			if (true)
 			{
 				// Constructor
 				buffer.AppendLine();
@@ -157,102 +152,80 @@ namespace AppStudio.Generators
 			buffer.AppendLine(@"}");
 		}
 
-		public static void GenerateGetAll(StringBuilder buffer, Table table, EntityConfig config)
+		public static void GenerateGetAll(StringBuilder buffer, Table table, ProjectConfig config)
 		{
 			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 			if (table == null) throw new ArgumentNullException(nameof(table));
 			if (config == null) throw new ArgumentNullException(nameof(config));
 
 			var template = @"
-public static List<{1}> Get{2}(IDbContext dbContext)
+public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache)
 {{
 	if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
+	if (cache == null) throw new ArgumentNullException(nameof(cache));
 
-	var items = new List<{1}>();
-
+	var items = new Dictionary<long, {1}>();
+	{4}
 	var query = new Query<{1}>(@""{0}"", r =>
 	{{
 		{3}
 	}});
 	foreach (var item in dbContext.Execute(query))
 	{{
-		items.Add(item);
+		items.Add(item.Id, item);
 	}}
 
 	return items;
 }}";
 
-			StringBuilder creator;
-			if (config.UseReadOnlyProperties)
+			var entityConfig = config.GetEntityConfig(table.Name);
+			var referenceTables = config.GetReferenceTables(table);
+
+			var creator = CreateCreatorMethod(table, referenceTables, config, entityConfig);
+
+			var cache = new StringBuilder();
+			foreach (var referenceTable in referenceTables)
 			{
-				creator = CreateReadonlyCreatorMethod(table, config);
+				if (cache.Length > 0)
+				{
+					cache.AppendLine();
+				}
+
+				var refEntityConfig = config.GetEntityConfig(referenceTable.Name);
+				cache.Append(@"var");
+				cache.Append(@" ");
+				cache.Append(NameProvider.GetVariableName(refEntityConfig.ClassPluralName));
+				cache.Append(@" = ");
+				cache.Append(@"cache.GetData");
+				cache.Append(@"<");
+				cache.Append(refEntityConfig.ClassName);
+				cache.Append(@">");
+				cache.Append(@"(");
+				cache.Append(@"dbContext");
+				cache.Append(@")");
+				cache.Append(@";");
 			}
-			else
+			if (cache.Length > 0)
 			{
-				creator = CreateCreatorMethod(table, config);
+				cache.Insert(0, Environment.NewLine);
+				cache.AppendLine();
 			}
 
 			var selectSql = new StringBuilder();
-			SqlGenerator.Select(selectSql, table, config);
-			buffer.AppendFormat(template, selectSql, config.ClassName, config.ClassPluralName, creator);
+			SqlGenerator.Select(selectSql, table, entityConfig);
+			buffer.AppendFormat(template, selectSql, entityConfig.ClassName, entityConfig.ClassPluralName, creator, cache);
 		}
 
-		private static StringBuilder CreateCreatorMethod(Table table, EntityConfig config)
-		{
-			var creator = new StringBuilder();
-
-			var properties = new List<ClassProperty>(table.Columns.Length);
-
-			creator.Append(@"var");
-			creator.Append(@" ");
-			creator.Append(@"v");
-			creator.Append(@" = ");
-			creator.Append(@"new");
-			creator.Append(@" ");
-			creator.Append(config.ClassName);
-			creator.Append(@"(");
-			creator.Append(@")");
-			creator.AppendLine(@";");
-
-			var index = 0;
-			foreach (var column in config.GetSelectColumns(table.Columns))
-			{
-				var property = ClassProperty.From(column, null, null, config.UseReadOnlyProperties);
-
-				properties.Add(property);
-
-				if (creator.Length > 0)
-				{
-					creator.AppendLine();
-					creator.Append("\t\t");
-				}
-
-				creator.Append(@"v");
-				creator.Append(@".");
-				creator.Append(property.Name);
-				creator.Append(@" = ");
-				ReadValue(creator, column, index++);
-				creator.Append(@";");
-			}
-
-			creator.AppendLine();
-			creator.AppendLine();
-			creator.Append("\t\t");
-			creator.Append(@"return v;");
-
-			return creator;
-		}
-
-		private static StringBuilder CreateReadonlyCreatorMethod(Table table, EntityConfig config)
+		private static StringBuilder CreateCreatorMethod(Table table, Table[] referenceTables, ProjectConfig config, EntityConfig entityConfig)
 		{
 			var creator = new StringBuilder();
 
 			var properties = new List<ClassProperty>(table.Columns.Length);
 
 			var index = 0;
-			foreach (var column in config.GetSelectColumns(table.Columns))
+			foreach (var column in entityConfig.GetSelectColumns(table.Columns))
 			{
-				var property = ClassProperty.From(column, null, null, config.UseReadOnlyProperties);
+				var property = ClassProperty.From(column, referenceTables, config);
 
 				properties.Add(property);
 
@@ -266,13 +239,22 @@ public static List<{1}> Get{2}(IDbContext dbContext)
 				creator.Append(@" ");
 				creator.Append(property.VariableName);
 				creator.Append(@" = ");
+				if (column.ForeignKey != null)
+				{
+					creator.Append(NameProvider.GetVariableName(GetForeignKeyEntityConfig(column, referenceTables, config).ClassPluralName));
+					creator.Append(@"[");
+				}
 				ReadValue(creator, column, index++);
+				if (column.ForeignKey != null)
+				{
+					creator.Append(@"]");
+				}
 				creator.Append(@";");
 			}
 
 			creator.AppendLine();
 			creator.Append("\t\t");
-			creator.AppendFormat(@"return new {0}({1});", config.ClassName, string.Join(@", ", properties.Select(p => p.VariableName)));
+			creator.AppendFormat(@"return new {0}({1});", entityConfig.ClassName, string.Join(@", ", properties.Select(p => p.VariableName)));
 
 			return creator;
 		}
@@ -332,25 +314,34 @@ public static List<{1}> Get{2}(IDbContext dbContext)
 				}
 			}
 
-			var entityConfig = default(EntityConfig);
+			return new KeyValuePair<string, bool>(GetForeignKeyEntityConfig(column, referenceTables, config).ClassName, true);
+		}
 
-			var foreignKeyTableName = column.ForeignKey.TableName;
+		private static EntityConfig GetForeignKeyEntityConfig(Column column, Table[] referenceTables, ProjectConfig config)
+		{
+			if (column == null) throw new ArgumentNullException(nameof(column));
+			if (referenceTables == null) throw new ArgumentNullException(nameof(referenceTables));
+			if (config == null) throw new ArgumentNullException(nameof(config));
+
+			return GetForeignKeyEntityConfig(column.ForeignKey, referenceTables, config);
+		}
+
+		private static EntityConfig GetForeignKeyEntityConfig(ForeignKey foreignKey, Table[] referenceTables, ProjectConfig config)
+		{
+			if (foreignKey == null) throw new ArgumentNullException(nameof(foreignKey));
+			if (referenceTables == null) throw new ArgumentNullException(nameof(referenceTables));
+			if (config == null) throw new ArgumentNullException(nameof(config));
+
+			var foreignKeyTableName = foreignKey.TableName;
 			foreach (var table in referenceTables)
 			{
 				if (table.Name == foreignKeyTableName)
 				{
-					entityConfig = config.GetEntityConfig(foreignKeyTableName);
-					break;
+					return config.GetEntityConfig(foreignKeyTableName);
 				}
 			}
 
-			return new KeyValuePair<string, bool>(entityConfig.ClassName, true);
-		}
-
-		private static string GetDefaultValue(Column column)
-		{
-			// TODO : config the column as Min/Max for DateTime
-			return GetDefaultValue(column.Type, false);
+			return null;
 		}
 
 		private static string GetDefaultValue(SqlDataType dataType, bool useDateTimeMax = false)

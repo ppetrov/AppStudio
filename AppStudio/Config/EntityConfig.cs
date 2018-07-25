@@ -9,7 +9,6 @@ namespace AppStudio.Config
 		public string TableName { get; }
 		public string ClassName { get; set; }
 		public string ClassPluralName { get; set; }
-		public bool UseReadOnlyProperties { get; set; } = true;
 
 		public EntityConfig(string tableName, string className = null, string classPluralName = null)
 		{

@@ -87,7 +87,7 @@ namespace DemoClient
 					//Console.WriteLine(buffer.ToString());
 					//Console.WriteLine();
 
-					
+
 
 					buffer.Clear();
 					CodeGenerator.GenerateClass(buffer, table, projectConfig);
@@ -97,7 +97,7 @@ namespace DemoClient
 					classes.AppendLine(buffer.ToString());
 
 					buffer.Clear();
-					//CodeGenerator.GenerateGetAll(buffer, table, config);
+					CodeGenerator.GenerateGetAll(buffer, table, projectConfig);
 					//Console.WriteLine(buffer.ToString());
 					//Console.WriteLine();
 
@@ -105,6 +105,14 @@ namespace DemoClient
 
 					//code.AppendLine(buffer.ToString());
 				}
+
+				var cache = new DataCache();
+				cache.Register(DataProviders.GetBrandkinds);
+				cache.Register(DataProviders.GetBrands);
+				cache.Register(DataProviders.GetFlavours);
+				var arts = DataProviders.GetArticles(ctx, cache);
+				Console.WriteLine(arts.Count);
+
 				ctx.Complete();
 			}
 
