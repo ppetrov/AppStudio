@@ -43,25 +43,26 @@ namespace AppStudio.Config
 
 
 
-		public Table[] GetReferenceTables(Table table)
+		public EntityConfig[] GetReferenceEntityConfigs(Table table)
 		{
 			if (table == null) throw new ArgumentNullException(nameof(table));
 
 			var fkCount = GetForeignKeyCount(table);
 			if (fkCount == 0)
 			{
-				return Enumerable.Empty<Table>().ToArray();
+				return Enumerable.Empty<EntityConfig>().ToArray();
 			}
 
 			var index = 0;
-			var referenceTables = new Table[fkCount];
+			var referenceTables = new EntityConfig[fkCount];
 
 			foreach (var c in table.Columns)
 			{
 				var fk = c.ForeignKey;
 				if (fk != null)
 				{
-					referenceTables[index++] = GetTable(this.Tables, fk.TableName);
+					var referenceTable = GetTable(this.Tables, fk.TableName);					
+					referenceTables[index++] = this.GetEntityConfig(referenceTable.Name);
 				}
 			}
 

@@ -30,13 +30,12 @@ namespace AppStudio.Generators
 				this.VariableDeclaration = type + @" " + this.VariableName;
 			}
 
-			public static ClassProperty From(Column column, Table[] referenceTables, ProjectConfig config)
+			public static ClassProperty From(Column column, EntityConfig[] referenceEntityConfigs)
 			{
 				if (column == null) throw new ArgumentNullException(nameof(column));
-				if (referenceTables == null) throw new ArgumentNullException(nameof(referenceTables));
-				if (config == null) throw new ArgumentNullException(nameof(config));
+				if (referenceEntityConfigs == null) throw new ArgumentNullException(nameof(referenceEntityConfigs));
 
-				var type = MapType(column, referenceTables, config);
+				var type = MapType(column, referenceEntityConfigs);
 
 				var name = column.ForeignKey == null
 					? NameProvider.GetPropertyName(column.Name)
@@ -63,13 +62,13 @@ namespace AppStudio.Generators
 			buffer.AppendLine(entityConfig.ClassName);
 			buffer.AppendLine(@"{");
 
-			var referenceTables = config.GetReferenceTables(table);
+			var referenceEntityConfigs = config.GetReferenceEntityConfigs(table);
 
 			var properties = new List<ClassProperty>();
 
 			foreach (var column in entityConfig.GetSelectColumns(table.Columns))
 			{
-				properties.Add(ClassProperty.From(column, referenceTables, config));
+				properties.Add(ClassProperty.From(column, referenceEntityConfigs));
 			}
 
 			foreach (var property in properties)
@@ -179,26 +178,25 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 }}";
 
 			var entityConfig = config.GetEntityConfig(table.Name);
-			var referenceTables = config.GetReferenceTables(table);
+			var referenceEntityConfigs = config.GetReferenceEntityConfigs(table);
 
-			var creator = CreateCreatorMethod(table, referenceTables, config, entityConfig);
+			var creator = CreateCreatorMethod(table, referenceEntityConfigs, entityConfig);
 
 			var cache = new StringBuilder();
-			foreach (var referenceTable in referenceTables)
+			foreach (var referenceEntityConfig in referenceEntityConfigs)
 			{
 				if (cache.Length > 0)
 				{
 					cache.AppendLine();
 				}
 
-				var refEntityConfig = config.GetEntityConfig(referenceTable.Name);
 				cache.Append(@"var");
 				cache.Append(@" ");
-				cache.Append(NameProvider.GetVariableName(refEntityConfig.ClassPluralName));
+				cache.Append(NameProvider.GetVariableName(referenceEntityConfig.ClassPluralName));
 				cache.Append(@" = ");
 				cache.Append(@"cache.GetData");
 				cache.Append(@"<");
-				cache.Append(refEntityConfig.ClassName);
+				cache.Append(referenceEntityConfig.ClassName);
 				cache.Append(@">");
 				cache.Append(@"(");
 				cache.Append(@"dbContext");
@@ -216,7 +214,7 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 			buffer.AppendFormat(template, selectSql, entityConfig.ClassName, entityConfig.ClassPluralName, creator, cache);
 		}
 
-		private static StringBuilder CreateCreatorMethod(Table table, Table[] referenceTables, ProjectConfig config, EntityConfig entityConfig)
+		private static StringBuilder CreateCreatorMethod(Table table, EntityConfig[] referenceEntityConfigs, EntityConfig entityConfig)
 		{
 			var creator = new StringBuilder();
 
@@ -225,7 +223,7 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 			var index = 0;
 			foreach (var column in entityConfig.GetSelectColumns(table.Columns))
 			{
-				var property = ClassProperty.From(column, referenceTables, config);
+				var property = ClassProperty.From(column, referenceEntityConfigs);
 
 				properties.Add(property);
 
@@ -241,7 +239,7 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 				creator.Append(@" = ");
 				if (column.ForeignKey != null)
 				{
-					creator.Append(NameProvider.GetVariableName(GetForeignKeyEntityConfig(referenceTables, config, column).ClassPluralName));
+					creator.Append(NameProvider.GetVariableName(GetForeignKeyEntityConfig(referenceEntityConfigs, column).ClassPluralName));
 					creator.Append(@"[");
 				}
 				ReadValue(creator, column, index++);
@@ -289,7 +287,7 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 			}
 		}
 
-		private static KeyValuePair<string, bool> MapType(Column column, Table[] referenceTables, ProjectConfig config)
+		private static KeyValuePair<string, bool> MapType(Column column, EntityConfig[] referenceEntityConfigs)
 		{
 			if (column.ForeignKey == null)
 			{
@@ -314,38 +312,20 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 				}
 			}
 
-			return new KeyValuePair<string, bool>(GetForeignKeyEntityConfig(referenceTables, config, column).ClassName, true);
+			return new KeyValuePair<string, bool>(GetForeignKeyEntityConfig(referenceEntityConfigs, column).ClassName, true);
 		}
 
-		private static EntityConfig GetForeignKeyEntityConfig(Table[] referenceTables, ProjectConfig config, Column column)
+		private static EntityConfig GetForeignKeyEntityConfig(EntityConfig[] referenceEntityConfigs, Column column)
 		{
 			if (column == null) throw new ArgumentNullException(nameof(column));
-			if (referenceTables == null) throw new ArgumentNullException(nameof(referenceTables));
-			if (config == null) throw new ArgumentNullException(nameof(config));
+			if (referenceEntityConfigs == null) throw new ArgumentNullException(nameof(referenceEntityConfigs));
 
-			return GetForeignKeyEntityConfig(referenceTables, config, column.ForeignKey);
-		}
-
-		private static EntityConfig GetForeignKeyEntityConfig(Table[] referenceTables, ProjectConfig config, ForeignKey foreignKey)
-		{
-			if (foreignKey == null) throw new ArgumentNullException(nameof(foreignKey));
-			if (referenceTables == null) throw new ArgumentNullException(nameof(referenceTables));
-			if (config == null) throw new ArgumentNullException(nameof(config));
-
-			return GetForeignKeyEntityConfig(referenceTables, config, foreignKey.TableName);
-		}
-
-		private static EntityConfig GetForeignKeyEntityConfig(Table[] referenceTables, ProjectConfig config, string tableName)
-		{
-			if (referenceTables == null) throw new ArgumentNullException(nameof(referenceTables));
-			if (config == null) throw new ArgumentNullException(nameof(config));
-			if (tableName == null) throw new ArgumentNullException(nameof(tableName));
-
-			foreach (var table in referenceTables)
+			var tableName = column.ForeignKey.TableName;
+			foreach (var cfg in referenceEntityConfigs)
 			{
-				if (table.Name == tableName)
+				if (cfg.TableName == tableName)
 				{
-					return config.GetEntityConfig(tableName);
+					return cfg;
 				}
 			}
 
