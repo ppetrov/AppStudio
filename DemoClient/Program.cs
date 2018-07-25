@@ -16,6 +16,8 @@ namespace DemoClient
 		{
 			var path = @"C:\Users\PetarPetrov\AppData\Local\Packages\9ed4bf97-9c34-45dc-a217-5f8121aa6dfc_7gbmn9e1bm2jj\LocalState\ifsa.sqlite";
 
+			path = @"C:\Users\PetarPetrov\Desktop\app_studio.sqlite";
+
 			var projectConfig = new ProjectConfig();
 			projectConfig.Add(new EntityConfig(@"ACTIVATION_COMPLIANCES"));
 			// TODO : !!!
@@ -32,18 +34,10 @@ namespace DemoClient
 			{
 				var tables = DataProvider.GetTables(ctx);
 
-				var sts = Class2.GetEquipmentChecks(ctx);
-				Console.WriteLine(sts.Count);
-
-
 				foreach (var table in tables)
 				{
-					if (table.Name.Contains('$'))
-					{
-						continue;
-					}
-
-					if (table.Name.IndexOf(@"Asset_Class", StringComparison.OrdinalIgnoreCase) >= 0 ||
+					if (table.Name.Contains('$') ||
+						table.Name.IndexOf(@"Asset_Class", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						table.Name.IndexOf(@"open_bala", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						table.Name.IndexOf(@"factory_cal", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						table.Name.IndexOf(@"Visit_dat", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -51,12 +45,17 @@ namespace DemoClient
 						continue;
 					}
 
-					Console.WriteLine(table.Name + @" -> " + table.Columns.Length);
-					//foreach (var column in table.Columns)
-					//{
-					//	Console.WriteLine("\t" + column.Name + @":" + column.Type + @" ->" + column.IsPrimaryKey);
-					//}
-					//Console.WriteLine();
+					Console.WriteLine(table.Name);
+					foreach (var column in table.Columns)
+					{
+						var fk = string.Empty;
+						if (column.ForeignKey != null)
+						{
+							fk = $@"{column.ForeignKey.TableName}({column.ForeignKey.ColumnName})";
+						}
+						Console.WriteLine("\t" + column.Name + @":" + column.Type + @" ->" + column.IsPrimaryKey + @", " + fk);
+					}
+					Console.WriteLine();
 
 					var buffer = new StringBuilder();
 
@@ -109,8 +108,26 @@ namespace DemoClient
 			Console.WriteLine(code.Length);
 			Console.WriteLine(data.Length);
 
-			File.WriteAllText(@"C:\temp\code.txt", code);
-			File.WriteAllText(@"C:\temp\data.txt", data);
+			File.WriteAllText(@"C:\Atos\AppStudio\Objects.cs", string.Format(@"using System;
+
+namespace AppStudio
+{{
+	{0}
+}}
+", code));
+
+			File.WriteAllText(@"C:\Atos\AppStudio\DataProviders.cs", string.Format(@"using System;
+using System.Collections.Generic;
+using AppStudio.Data;
+
+namespace AppStudio
+{{
+	public static class DataProviders
+	{{
+		{0}
+	}}
+}}
+", data));
 
 
 

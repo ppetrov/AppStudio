@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using AppStudio.Db;
 
 namespace AppStudio.Config
 {
@@ -7,8 +8,8 @@ namespace AppStudio.Config
 	{
 		public string TableName { get; }
 		public string ClassName { get; set; }
-		public string ClassPluralName { get; set; } = string.Empty;
-		public bool AsReadOnly { get; set; } = true;
+		public string ClassPluralName { get; set; }
+		public bool UseReadOnlyProperties { get; set; } = true;
 
 		public EntityConfig(string tableName, string className = null, string classPluralName = null)
 		{

@@ -57,7 +57,7 @@ namespace AppStudio.Generators
 			buffer.AppendLine(config.ClassName);
 			buffer.AppendLine(@"{");
 
-			var readOnly = config.AsReadOnly;
+			var readOnly = config.UseReadOnlyProperties;
 			var properties = new List<ClassProperty>();
 
 			foreach (var column in config.GetSelectColumns(table.Columns))
@@ -169,12 +169,45 @@ public static List<{1}> Get{2}(IDbContext dbContext)
 
 	return items;
 }}";
+
+			StringBuilder creator;
+			if (config.UseReadOnlyProperties)
+			{
+				creator = CreateReadonlyCreatorMethod(table, config);
+			}
+			else
+			{
+				creator = CreateCreatorMethod(table, config);
+			}
+
+			var selectSql = new StringBuilder();
+			SqlGenerator.Select(selectSql, table, config);
+			buffer.AppendFormat(template, selectSql, config.ClassName, config.ClassPluralName, creator);
+		}
+
+		private static StringBuilder CreateCreatorMethod(Table table, EntityConfig config)
+		{
 			var creator = new StringBuilder();
+
 			var properties = new List<ClassProperty>(table.Columns.Length);
+
+			//var activationCompliance = new ActivationCompliance();
+			//creator.AppendFormat(@"return v;", config.ClassName, string.Join(@", ", properties.Select(p => p.VariableName)));
+			creator.Append(@"var");
+			creator.Append(@" ");
+			creator.Append(@"v");
+			creator.Append(@" = ");
+			creator.Append(@"new");
+			creator.Append(@" ");
+			creator.Append(config.ClassName);
+			creator.Append(@"(");
+			creator.Append(@")");
+			creator.AppendLine(@";");
+
 			var index = 0;
 			foreach (var column in config.GetSelectColumns(table.Columns))
 			{
-				var property = ClassProperty.From(column, config.AsReadOnly);
+				var property = ClassProperty.From(column, config.UseReadOnlyProperties);
 
 				properties.Add(property);
 
@@ -183,6 +216,42 @@ public static List<{1}> Get{2}(IDbContext dbContext)
 					creator.AppendLine();
 					creator.Append("\t\t");
 				}
+
+				creator.Append(@"v");
+				creator.Append(@".");
+				creator.Append(property.Name);
+				creator.Append(@" = ");
+				ReadValue(creator, column, index++);
+				creator.Append(@";");
+			}
+
+			creator.AppendLine();
+			creator.AppendLine();
+			creator.Append("\t\t");
+			creator.Append(@"return v;");
+
+			return creator;
+		}
+
+		private static StringBuilder CreateReadonlyCreatorMethod(Table table, EntityConfig config)
+		{
+			var creator = new StringBuilder();
+
+			var properties = new List<ClassProperty>(table.Columns.Length);
+
+			var index = 0;
+			foreach (var column in config.GetSelectColumns(table.Columns))
+			{
+				var property = ClassProperty.From(column, config.UseReadOnlyProperties);
+
+				properties.Add(property);
+
+				if (creator.Length > 0)
+				{
+					creator.AppendLine();
+					creator.Append("\t\t");
+				}
+
 				creator.Append(@"var");
 				creator.Append(@" ");
 				creator.Append(property.VariableName);
@@ -195,9 +264,7 @@ public static List<{1}> Get{2}(IDbContext dbContext)
 			creator.Append("\t\t");
 			creator.AppendFormat(@"return new {0}({1});", config.ClassName, string.Join(@", ", properties.Select(p => p.VariableName)));
 
-			var selectSql = new StringBuilder();
-			SqlGenerator.Select(selectSql, table, config);
-			buffer.AppendFormat(template, selectSql, config.ClassName, config.ClassPluralName, creator.ToString());
+			return creator;
 		}
 
 		private static void ReadValue(StringBuilder buffer, Column column, int index)

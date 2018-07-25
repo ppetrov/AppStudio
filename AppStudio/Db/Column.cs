@@ -1,7 +1,6 @@
 ﻿using System;
-using AppStudio.Db;
 
-namespace AppStudio
+namespace AppStudio.Db
 {
 	public sealed class Column
 	{
@@ -10,8 +9,9 @@ namespace AppStudio
 		public long Position { get; }
 		public bool IsNullable { get; }
 		public bool IsPrimaryKey { get; }
+		public ForeignKey ForeignKey { get; }
 
-		public Column(string name, SqlDataType type, long position, bool isNullable, bool isPrimaryKey)
+		public Column(string name, SqlDataType type, long position, bool isNullable, bool isPrimaryKey, ForeignKey foreignKey = null)
 		{
 			if (name == null) throw new ArgumentNullException(nameof(name));
 
@@ -20,6 +20,7 @@ namespace AppStudio
 			this.Position = position;
 			this.IsNullable = isNullable;
 			this.IsPrimaryKey = isPrimaryKey;
+			this.ForeignKey = foreignKey;
 		}
 	}
 }
