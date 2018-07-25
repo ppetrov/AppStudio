@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
 using System.Linq;
@@ -34,6 +35,8 @@ namespace DemoClient
 			{
 				var tables = DataProvider.GetTables(ctx);
 
+				projectConfig.Tables = tables;
+
 				foreach (var table in tables)
 				{
 					if (table.Name.Contains('$') ||
@@ -59,7 +62,7 @@ namespace DemoClient
 
 					var buffer = new StringBuilder();
 
-					var config = projectConfig.GetEntityConfig(table.Name);
+					//var config = projectConfig.GetEntityConfig(table.Name);
 					//Console.WriteLine(config.ClassName);
 					//Console.WriteLine(config.ClassPluralName);
 					//Console.WriteLine();
@@ -84,15 +87,17 @@ namespace DemoClient
 					//Console.WriteLine(buffer.ToString());
 					//Console.WriteLine();
 
+					
+
 					buffer.Clear();
-					CodeGenerator.GenerateClass(buffer, table, config);
+					CodeGenerator.GenerateClass(buffer, table, projectConfig);
 					//Console.WriteLine(buffer.ToString());
 					//Console.WriteLine();
 
 					classes.AppendLine(buffer.ToString());
 
 					buffer.Clear();
-					CodeGenerator.GenerateGetAll(buffer, table, config);
+					//CodeGenerator.GenerateGetAll(buffer, table, config);
 					//Console.WriteLine(buffer.ToString());
 					//Console.WriteLine();
 
@@ -137,5 +142,7 @@ namespace AppStudio
 			//	Console.WriteLine(t);
 			//}
 		}
+
+
 	}
 }

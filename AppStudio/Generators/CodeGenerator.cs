@@ -30,10 +30,18 @@ namespace AppStudio.Generators
 				this.VariableDeclaration = type + @" " + this.VariableName;
 			}
 
-			public static ClassProperty From(Column column, bool readOnly)
+			public static ClassProperty From(Column column, Table[] referenceTables, ProjectConfig config, bool readOnly)
 			{
-				var type = MapType(column.Type);
-				var name = NameProvider.GetPropertyName(column.Name);
+				if (column == null) throw new ArgumentNullException(nameof(column));
+				if (referenceTables == null) throw new ArgumentNullException(nameof(referenceTables));
+				if (config == null) throw new ArgumentNullException(nameof(config));
+
+				var type = MapType(column, referenceTables, config);
+
+				var name = column.ForeignKey == null
+					? NameProvider.GetPropertyName(column.Name)
+					: NameProvider.GetPropertyName(type.Key);
+
 				if (readOnly)
 				{
 					return new ClassProperty(type.Key, type.Value, name, @"{ get; }");
@@ -42,11 +50,13 @@ namespace AppStudio.Generators
 			}
 		}
 
-		public static void GenerateClass(StringBuilder buffer, Table table, EntityConfig config)
+		public static void GenerateClass(StringBuilder buffer, Table table, ProjectConfig config)
 		{
 			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 			if (table == null) throw new ArgumentNullException(nameof(table));
 			if (config == null) throw new ArgumentNullException(nameof(config));
+
+			var entityConfig = config.GetEntityConfig(table.Name);
 
 			buffer.Append(@"public");
 			buffer.Append(@" ");
@@ -54,15 +64,17 @@ namespace AppStudio.Generators
 			buffer.Append(@" ");
 			buffer.Append(@"class");
 			buffer.Append(@" ");
-			buffer.AppendLine(config.ClassName);
+			buffer.AppendLine(entityConfig.ClassName);
 			buffer.AppendLine(@"{");
 
-			var readOnly = config.UseReadOnlyProperties;
+			var referenceTables = config.GetReferenceTables(table);
+
+			var readOnly = entityConfig.UseReadOnlyProperties;
 			var properties = new List<ClassProperty>();
 
-			foreach (var column in config.GetSelectColumns(table.Columns))
+			foreach (var column in entityConfig.GetSelectColumns(table.Columns))
 			{
-				properties.Add(ClassProperty.From(column, readOnly));
+				properties.Add(ClassProperty.From(column, referenceTables, config, readOnly));
 			}
 
 			foreach (var property in properties)
@@ -89,7 +101,7 @@ namespace AppStudio.Generators
 				buffer.Append('\t');
 				buffer.Append(@"public");
 				buffer.Append(@" ");
-				buffer.Append(config.ClassName);
+				buffer.Append(entityConfig.ClassName);
 				buffer.Append(@"(");
 				// Parameters
 				var addComma = false;
@@ -191,8 +203,6 @@ public static List<{1}> Get{2}(IDbContext dbContext)
 
 			var properties = new List<ClassProperty>(table.Columns.Length);
 
-			//var activationCompliance = new ActivationCompliance();
-			//creator.AppendFormat(@"return v;", config.ClassName, string.Join(@", ", properties.Select(p => p.VariableName)));
 			creator.Append(@"var");
 			creator.Append(@" ");
 			creator.Append(@"v");
@@ -207,7 +217,7 @@ public static List<{1}> Get{2}(IDbContext dbContext)
 			var index = 0;
 			foreach (var column in config.GetSelectColumns(table.Columns))
 			{
-				var property = ClassProperty.From(column, config.UseReadOnlyProperties);
+				var property = ClassProperty.From(column, null, null, config.UseReadOnlyProperties);
 
 				properties.Add(property);
 
@@ -242,7 +252,7 @@ public static List<{1}> Get{2}(IDbContext dbContext)
 			var index = 0;
 			foreach (var column in config.GetSelectColumns(table.Columns))
 			{
-				var property = ClassProperty.From(column, config.UseReadOnlyProperties);
+				var property = ClassProperty.From(column, null, null, config.UseReadOnlyProperties);
 
 				properties.Add(property);
 
@@ -297,27 +307,44 @@ public static List<{1}> Get{2}(IDbContext dbContext)
 			}
 		}
 
-		private static KeyValuePair<string, bool> MapType(SqlDataType dataType)
+		private static KeyValuePair<string, bool> MapType(Column column, Table[] referenceTables, ProjectConfig config)
 		{
-			switch (dataType)
+			if (column.ForeignKey == null)
 			{
-				case SqlDataType.Int:
-					return new KeyValuePair<string, bool>(@"int", false);
-				case SqlDataType.Long:
-					return new KeyValuePair<string, bool>(@"long", false);
-				case SqlDataType.Decimal:
-					return new KeyValuePair<string, bool>(@"decimal", false);
-				case SqlDataType.DateTime:
-					return new KeyValuePair<string, bool>(@"DateTime", false);
-				case SqlDataType.String:
-					return new KeyValuePair<string, bool>(@"string", true);
-				case SqlDataType.ByteArray:
-					return new KeyValuePair<string, bool>(@"byte[]", true);
-				case SqlDataType.Guid:
-					return new KeyValuePair<string, bool>(@"string", true);
-				default:
-					throw new ArgumentOutOfRangeException(nameof(dataType), dataType, null);
+				switch (column.Type)
+				{
+					case SqlDataType.Int:
+						return new KeyValuePair<string, bool>(@"int", false);
+					case SqlDataType.Long:
+						return new KeyValuePair<string, bool>(@"long", false);
+					case SqlDataType.Decimal:
+						return new KeyValuePair<string, bool>(@"decimal", false);
+					case SqlDataType.DateTime:
+						return new KeyValuePair<string, bool>(@"DateTime", false);
+					case SqlDataType.String:
+						return new KeyValuePair<string, bool>(@"string", true);
+					case SqlDataType.ByteArray:
+						return new KeyValuePair<string, bool>(@"byte[]", true);
+					case SqlDataType.Guid:
+						return new KeyValuePair<string, bool>(@"string", true);
+					default:
+						throw new ArgumentOutOfRangeException(nameof(column.Type), column.Type, null);
+				}
 			}
+
+			var entityConfig = default(EntityConfig);
+
+			var foreignKeyTableName = column.ForeignKey.TableName;
+			foreach (var table in referenceTables)
+			{
+				if (table.Name == foreignKeyTableName)
+				{
+					entityConfig = config.GetEntityConfig(foreignKeyTableName);
+					break;
+				}
+			}
+
+			return new KeyValuePair<string, bool>(entityConfig.ClassName, true);
 		}
 
 		private static string GetDefaultValue(Column column)

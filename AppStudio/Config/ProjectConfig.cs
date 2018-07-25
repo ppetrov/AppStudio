@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using AppStudio.Db;
 
 namespace AppStudio.Config
 {
 	public sealed class ProjectConfig
 	{
+		public Table[] Tables { get; set; }
+
 		private Dictionary<string, EntityConfig> EntityConfigs { get; } = new Dictionary<string, EntityConfig>(StringComparer.OrdinalIgnoreCase);
 
 		public void Add(EntityConfig config)
@@ -34,6 +38,61 @@ namespace AppStudio.Config
 		{
 			if (filePath == null) throw new ArgumentNullException(nameof(filePath));
 
+		}
+
+
+
+
+		public Table[] GetReferenceTables(Table table)
+		{
+			if (table == null) throw new ArgumentNullException(nameof(table));
+
+			var fkCount = GetForeignKeyCount(table);
+			if (fkCount == 0)
+			{
+				return Enumerable.Empty<Table>().ToArray();
+			}
+
+			var index = 0;
+			var referenceTables = new Table[fkCount];
+
+			foreach (var c in table.Columns)
+			{
+				var fk = c.ForeignKey;
+				if (fk != null)
+				{
+					referenceTables[index++] = GetTable(this.Tables, fk.TableName);
+				}
+			}
+
+			return referenceTables.ToArray();
+		}
+
+		private static int GetForeignKeyCount(Table table)
+		{
+			var count = 0;
+
+			foreach (var column in table.Columns)
+			{
+				if (column.ForeignKey != null)
+				{
+					count++;
+				}
+			}
+
+			return count;
+		}
+
+		private static Table GetTable(Table[] tables, string name)
+		{
+			foreach (var t in tables)
+			{
+				if (t.Name == name)
+				{
+					return t;
+				}
+			}
+			return null;
 		}
 	}
 }
