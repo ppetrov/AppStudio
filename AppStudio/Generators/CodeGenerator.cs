@@ -241,7 +241,7 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 				creator.Append(@" = ");
 				if (column.ForeignKey != null)
 				{
-					creator.Append(NameProvider.GetVariableName(GetForeignKeyEntityConfig(column, referenceTables, config).ClassPluralName));
+					creator.Append(NameProvider.GetVariableName(GetForeignKeyEntityConfig(referenceTables, config, column).ClassPluralName));
 					creator.Append(@"[");
 				}
 				ReadValue(creator, column, index++);
@@ -314,30 +314,38 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 				}
 			}
 
-			return new KeyValuePair<string, bool>(GetForeignKeyEntityConfig(column, referenceTables, config).ClassName, true);
+			return new KeyValuePair<string, bool>(GetForeignKeyEntityConfig(referenceTables, config, column).ClassName, true);
 		}
 
-		private static EntityConfig GetForeignKeyEntityConfig(Column column, Table[] referenceTables, ProjectConfig config)
+		private static EntityConfig GetForeignKeyEntityConfig(Table[] referenceTables, ProjectConfig config, Column column)
 		{
 			if (column == null) throw new ArgumentNullException(nameof(column));
 			if (referenceTables == null) throw new ArgumentNullException(nameof(referenceTables));
 			if (config == null) throw new ArgumentNullException(nameof(config));
 
-			return GetForeignKeyEntityConfig(column.ForeignKey, referenceTables, config);
+			return GetForeignKeyEntityConfig(referenceTables, config, column.ForeignKey);
 		}
 
-		private static EntityConfig GetForeignKeyEntityConfig(ForeignKey foreignKey, Table[] referenceTables, ProjectConfig config)
+		private static EntityConfig GetForeignKeyEntityConfig(Table[] referenceTables, ProjectConfig config, ForeignKey foreignKey)
 		{
 			if (foreignKey == null) throw new ArgumentNullException(nameof(foreignKey));
 			if (referenceTables == null) throw new ArgumentNullException(nameof(referenceTables));
 			if (config == null) throw new ArgumentNullException(nameof(config));
 
-			var foreignKeyTableName = foreignKey.TableName;
+			return GetForeignKeyEntityConfig(referenceTables, config, foreignKey.TableName);
+		}
+
+		private static EntityConfig GetForeignKeyEntityConfig(Table[] referenceTables, ProjectConfig config, string tableName)
+		{
+			if (referenceTables == null) throw new ArgumentNullException(nameof(referenceTables));
+			if (config == null) throw new ArgumentNullException(nameof(config));
+			if (tableName == null) throw new ArgumentNullException(nameof(tableName));
+
 			foreach (var table in referenceTables)
 			{
-				if (table.Name == foreignKeyTableName)
+				if (table.Name == tableName)
 				{
-					return config.GetEntityConfig(foreignKeyTableName);
+					return config.GetEntityConfig(tableName);
 				}
 			}
 
