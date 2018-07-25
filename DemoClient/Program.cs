@@ -32,6 +32,10 @@ namespace DemoClient
 			{
 				var tables = DataProvider.GetTables(ctx);
 
+				var sts = Class2.GetEquipmentChecks(ctx);
+				Console.WriteLine(sts.Count);
+
+
 				foreach (var table in tables)
 				{
 					if (table.Name.Contains('$'))
@@ -40,8 +44,8 @@ namespace DemoClient
 					}
 
 					if (table.Name.IndexOf(@"Asset_Class", StringComparison.OrdinalIgnoreCase) >= 0 ||
-					    table.Name.IndexOf(@"open_bala", StringComparison.OrdinalIgnoreCase) >= 0 ||
-					    table.Name.IndexOf(@"factory_cal", StringComparison.OrdinalIgnoreCase) >= 0 ||
+						table.Name.IndexOf(@"open_bala", StringComparison.OrdinalIgnoreCase) >= 0 ||
+						table.Name.IndexOf(@"factory_cal", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						table.Name.IndexOf(@"Visit_dat", StringComparison.OrdinalIgnoreCase) >= 0)
 					{
 						continue;

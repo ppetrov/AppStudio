@@ -87,7 +87,7 @@ namespace AppStudio.Generators
 
 		private static void AddColumns(StringBuilder buffer, IEnumerable<Column> columns)
 		{
-			Add(buffer, columns, (b, c) => b.Append(c.Name));
+			Add(buffer, columns, AddColumn);
 		}
 
 		private static void AddParameters(StringBuilder buffer, IEnumerable<Column> columns)
@@ -127,6 +127,21 @@ namespace AppStudio.Generators
 				buffer.Append(@" = ");
 				AddParameter(buffer, column);
 				addComma = true;
+			}
+		}
+
+		private static void AddColumn(StringBuilder buffer, Column column)
+		{
+			if (column.Type == SqlDataType.Guid)
+			{
+				buffer.Append(@"QUOTE");
+				buffer.Append(@"(");
+				buffer.Append(column.Name);
+				buffer.Append(@")");
+			}
+			else
+			{
+				buffer.Append(column.Name);
 			}
 		}
 

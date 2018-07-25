@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AppStudio.Config;
-using AppStudio.Generators;
+using AppStudio.Db;
 
-namespace AppStudio.Db
+namespace AppStudio.Generators
 {
 	public static class CodeGenerator
 	{
@@ -152,9 +152,9 @@ namespace AppStudio.Db
 			if (config == null) throw new ArgumentNullException(nameof(config));
 
 			var template = @"
-public static List<{1}> Get{2}(IDbContext context)
+public static List<{1}> Get{2}(IDbContext dbContext)
 {{
-	if (context == null) throw new ArgumentNullException(nameof(context));
+	if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
 
 	var items = new List<{1}>();
 
@@ -162,7 +162,7 @@ public static List<{1}> Get{2}(IDbContext context)
 	{{
 		{3}
 	}});
-	foreach (var item in context.Execute(query))
+	foreach (var item in dbContext.Execute(query))
 	{{
 		items.Add(item);
 	}}
@@ -171,6 +171,7 @@ public static List<{1}> Get{2}(IDbContext context)
 }}";
 			var creator = new StringBuilder();
 			var properties = new List<ClassProperty>(table.Columns.Length);
+			var index = 0;
 			foreach (var column in config.GetSelectColumns(table.Columns))
 			{
 				var property = ClassProperty.From(column, config.AsReadOnly);
@@ -186,21 +187,47 @@ public static List<{1}> Get{2}(IDbContext context)
 				creator.Append(@" ");
 				creator.Append(property.VariableName);
 				creator.Append(@" = ");
-				creator.Append(GetDefaultValue(column));
+				ReadValue(creator, column, index++);
 				creator.Append(@";");
 			}
-
 
 			creator.AppendLine();
 			creator.Append("\t\t");
 			creator.AppendFormat(@"return new {0}({1});", config.ClassName, string.Join(@", ", properties.Select(p => p.VariableName)));
-			//var a = Query.GetLong(r, -1);
-			//var b = Query.GetLong(r, -1);
-			//return new ActivationCompliance("", 0, "", "");
 
 			var selectSql = new StringBuilder();
 			SqlGenerator.Select(selectSql, table, config);
-			buffer.AppendFormat(template, selectSql.ToString(), config.ClassName, config.ClassPluralName, creator.ToString());
+			buffer.AppendFormat(template, selectSql, config.ClassName, config.ClassPluralName, creator.ToString());
+		}
+
+		private static void ReadValue(StringBuilder buffer, Column column, int index)
+		{
+			switch (column.Type)
+			{
+				case SqlDataType.Int:
+					buffer.AppendFormat(@"Query.GetInt(r, {0})", index);
+					break;
+				case SqlDataType.Long:
+					buffer.AppendFormat(@"Query.GetLong(r, {0})", index);
+					break;
+				case SqlDataType.Decimal:
+					buffer.AppendFormat(@"Query.GetDecimal(r, {0})", index);
+					break;
+				case SqlDataType.DateTime:
+					buffer.AppendFormat(@"Query.GetDateTime(r, {0})", index);
+					break;
+				case SqlDataType.String:
+					buffer.AppendFormat(@"Query.GetString(r, {0})", index);
+					break;
+				case SqlDataType.ByteArray:
+					buffer.AppendFormat(@"Query.GetByteArray(r, {0})", index);
+					break;
+				case SqlDataType.Guid:
+					buffer.AppendFormat(@"Query.GetGuid(r, {0})", index);
+					break;
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
 		}
 
 		private static KeyValuePair<string, bool> MapType(SqlDataType dataType)
