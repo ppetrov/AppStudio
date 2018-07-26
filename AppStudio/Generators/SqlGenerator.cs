@@ -9,11 +9,12 @@ namespace AppStudio.Generators
 {
 	public static class SqlGenerator
 	{
-		public static void Select(StringBuilder buffer, Table table, EntityConfig config)
+		public static string Select(Table table, EntityConfig config)
 		{
-			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 			if (table == null) throw new ArgumentNullException(nameof(table));
 			if (config == null) throw new ArgumentNullException(nameof(config));
+
+			var buffer = new StringBuilder();
 
 			buffer.Append(@"SELECT");
 			buffer.Append(@" ");
@@ -22,13 +23,16 @@ namespace AppStudio.Generators
 			buffer.Append(@"FROM");
 			buffer.Append(@" ");
 			buffer.Append(table.Name);
+
+			return buffer.ToString();
 		}
 
-		public static void Insert(StringBuilder buffer, Table table, EntityConfig config)
+		public static string Insert(Table table, EntityConfig config)
 		{
-			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 			if (table == null) throw new ArgumentNullException(nameof(table));
 			if (config == null) throw new ArgumentNullException(nameof(config));
+
+			var buffer = new StringBuilder();
 
 			buffer.Append(@"INSERT");
 			buffer.Append(@" ");
@@ -47,13 +51,16 @@ namespace AppStudio.Generators
 			buffer.Append(@"(");
 			AddParameters(buffer, table.Columns);
 			buffer.Append(@")");
+
+			return buffer.ToString();
 		}
 
-		public static void Update(StringBuilder buffer, Table table, EntityConfig config)
+		public static string Update(Table table, EntityConfig config)
 		{
-			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 			if (table == null) throw new ArgumentNullException(nameof(table));
 			if (config == null) throw new ArgumentNullException(nameof(config));
+
+			var buffer = new StringBuilder();
 
 			buffer.Append(@"UPDATE");
 			buffer.Append(@" ");
@@ -66,14 +73,16 @@ namespace AppStudio.Generators
 			buffer.Append(@"WHERE");
 			buffer.AppendLine();
 			AddColumnToParamAssignment(buffer, table.Columns.Where(c => c.IsPrimaryKey));
+
+			return buffer.ToString();
 		}
 
-		public static void Delete(StringBuilder buffer, Table table, EntityConfig config)
+		public static string Delete(Table table, EntityConfig config)
 		{
-			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 			if (table == null) throw new ArgumentNullException(nameof(table));
 			if (config == null) throw new ArgumentNullException(nameof(config));
 
+			var buffer = new StringBuilder();
 			buffer.Append(@"DELETE");
 			buffer.Append(@" ");
 			buffer.Append(@"FROM");
@@ -83,6 +92,8 @@ namespace AppStudio.Generators
 			buffer.Append(@"WHERE");
 			buffer.AppendLine();
 			AddColumnToParamAssignment(buffer, table.Columns.Where(c => c.IsPrimaryKey));
+
+			return buffer.ToString();
 		}
 
 		private static void AddColumns(StringBuilder buffer, IEnumerable<Column> columns)

@@ -19,14 +19,14 @@ var flavours = cache.GetData<Flavour>(dbContext);
 
 	var query = new Query<Article>(@"SELECT Id, Name, Brand_Id, Flavor_Id, Valid_From, Valid_To FROM Articles", r =>
 	{
-		var id = Query.GetLong(r, 0);
-		var name = Query.GetString(r, 1);
-		var brand = brands[Query.GetLong(r, 2)];
-		var flavour = flavours[Query.GetLong(r, 3)];
-		var validFrom = Query.GetDateTime(r, 4) ?? DateTime.MinValue;
-		var validTo = Query.GetDateTime(r, 5) ?? DateTime.MaxValue;
-		
-		return new Article(id, name, brand, flavour, validFrom, validTo);
+	var id = Query.GetLong(r, 0);
+var name = Query.GetString(r, 1);
+var brand = brands[Query.GetLong(r, 2)];
+var flavour = flavours[Query.GetLong(r, 3)];
+var validFrom = Query.GetDateTime(r, 4) ?? DateTime.MinValue;
+var validTo = Query.GetDateTime(r, 5) ?? DateTime.MaxValue;
+
+return new Article(id, name, brand, flavour, validFrom, validTo);
 	});
 	foreach (var item in dbContext.Execute(query))
 	{
@@ -45,10 +45,10 @@ public static Dictionary<long, BrandKind> GetBrandKinds(IDbContext dbContext, Da
 	
 	var query = new Query<BrandKind>(@"SELECT Id, Name FROM Brand_Kinds", r =>
 	{
-		var id = Query.GetLong(r, 0);
-		var name = Query.GetString(r, 1);
-		
-		return new BrandKind(id, name);
+	var id = Query.GetLong(r, 0);
+var name = Query.GetString(r, 1);
+
+return new BrandKind(id, name);
 	});
 	foreach (var item in dbContext.Execute(query))
 	{
@@ -69,11 +69,11 @@ var brandKinds = cache.GetData<BrandKind>(dbContext);
 
 	var query = new Query<Brand>(@"SELECT Id, Name, BrandKind_Id FROM Brands", r =>
 	{
-		var id = Query.GetLong(r, 0);
-		var name = Query.GetString(r, 1);
-		var brandKind = brandKinds[Query.GetLong(r, 2)];
-		
-		return new Brand(id, name, brandKind);
+	var id = Query.GetLong(r, 0);
+var name = Query.GetString(r, 1);
+var brandKind = brandKinds[Query.GetLong(r, 2)];
+
+return new Brand(id, name, brandKind);
 	});
 	foreach (var item in dbContext.Execute(query))
 	{
@@ -92,10 +92,10 @@ public static Dictionary<long, Flavour> GetFlavours(IDbContext dbContext, DataCa
 	
 	var query = new Query<Flavour>(@"SELECT Id, Name FROM Flavours", r =>
 	{
-		var id = Query.GetLong(r, 0);
-		var name = Query.GetString(r, 1);
-		
-		return new Flavour(id, name);
+	var id = Query.GetLong(r, 0);
+var name = Query.GetString(r, 1);
+
+return new Flavour(id, name);
 	});
 	foreach (var item in dbContext.Execute(query))
 	{

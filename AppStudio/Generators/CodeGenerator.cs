@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using AppStudio.Config;
 using AppStudio.Db;
@@ -12,14 +11,16 @@ namespace AppStudio.Generators
 		private sealed class ClassProperty
 		{
 			public readonly Column Column;
+			public readonly EntityConfig ReferenceEntityConfig;
 			public readonly string Type;
 			public readonly bool IsReferenceType;
 			public readonly string Name;
 			public readonly string VariableName;
 
-			private ClassProperty(Column column, string type, bool isReferenceType, string name)
+			private ClassProperty(Column column, string type, bool isReferenceType, string name, EntityConfig referenceEntityConfig)
 			{
 				this.Column = column;
+				this.ReferenceEntityConfig = referenceEntityConfig;
 				this.Type = type;
 				this.IsReferenceType = isReferenceType;
 				this.Name = name;
@@ -30,11 +31,21 @@ namespace AppStudio.Generators
 			{
 				var type = MapType(column, config);
 
-				var name = column.ForeignKey == null
-					? NameProvider.GetPropertyName(column.Name)
-					: type.Key;
+				string name;
+				EntityConfig entityConfig;
 
-				return new ClassProperty(column, type.Key, type.Value, name);
+				if (column.ForeignKey == null)
+				{
+					name = NameProvider.GetPropertyName(column.Name);
+					entityConfig = null;
+				}
+				else
+				{
+					name = type.Key;
+					entityConfig = config.GetEntityConfig(column.ForeignKey.TableName);
+				}
+
+				return new ClassProperty(column, type.Key, type.Value, name, entityConfig);
 			}
 		}
 
@@ -69,6 +80,45 @@ namespace AppStudio.Generators
 			buffer.AppendLine(@"}");
 		}
 
+		public static void GenerateGetAll(StringBuilder buffer, Table table, ProjectConfig config)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (table == null) throw new ArgumentNullException(nameof(table));
+			if (config == null) throw new ArgumentNullException(nameof(config));
+
+			const string template = @"
+public static Dictionary<long, {0}> Get{1}(IDbContext dbContext, DataCache cache)
+{{
+	if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
+	if (cache == null) throw new ArgumentNullException(nameof(cache));
+
+	var items = new Dictionary<long, {0}>();
+	{4}
+	var query = new Query<{0}>(@""{2}"", r =>
+	{{
+	{3}
+	}});
+	foreach (var item in dbContext.Execute(query))
+	{{
+		items.Add(item.Id, item);
+	}}
+
+	return items;
+}}";
+
+			var entityConfig = config.GetEntityConfig(table.Name);
+			var className = entityConfig.ClassName;
+			var properties = GetProperties(table, config, entityConfig);
+
+			buffer.AppendFormat(template,
+				className,
+				entityConfig.ClassPluralName,
+				SqlGenerator.Select(table, entityConfig),
+				GetCreator(className, properties),
+				GetDictionariesVariables(properties));
+		}
+
+
 		private static List<ClassProperty> GetProperties(Table table, ProjectConfig config, EntityConfig entityConfig)
 		{
 			var properties = new List<ClassProperty>(table.Columns.Length);
@@ -85,7 +135,6 @@ namespace AppStudio.Generators
 		{
 			foreach (var property in properties)
 			{
-				buffer.Append('\t');
 				buffer.Append(@"public");
 				buffer.Append(@" ");
 				buffer.Append(property.Type);
@@ -99,7 +148,6 @@ namespace AppStudio.Generators
 
 		private static void AppendConstructor(StringBuilder buffer, List<ClassProperty> properties, string className)
 		{
-			buffer.Append('\t');
 			buffer.Append(@"public");
 			buffer.Append(@" ");
 			buffer.Append(className);
@@ -109,7 +157,6 @@ namespace AppStudio.Generators
 			buffer.Append(@")");
 			buffer.AppendLine();
 
-			buffer.Append('\t');
 			buffer.AppendLine(@"{");
 
 			// Parameters guards
@@ -118,7 +165,6 @@ namespace AppStudio.Generators
 			// Assign Parameters
 			AppendAssignParameters(buffer, properties);
 
-			buffer.Append('\t');
 			buffer.AppendLine(@"}");
 		}
 
@@ -153,7 +199,6 @@ namespace AppStudio.Generators
 					hasGuards = true;
 
 					var variableName = property.VariableName;
-					buffer.Append("\t\t");
 					buffer.AppendFormat($"if ({variableName} == null) throw new ArgumentNullException(nameof({variableName}));");
 					buffer.AppendLine();
 				}
@@ -169,7 +214,6 @@ namespace AppStudio.Generators
 		{
 			foreach (var property in properties)
 			{
-				buffer.Append("\t\t");
 				buffer.Append(@"this");
 				buffer.Append(@".");
 				buffer.Append(property.Name);
@@ -182,122 +226,105 @@ namespace AppStudio.Generators
 
 
 
-		public static void GenerateGetAll(StringBuilder buffer, Table table, ProjectConfig config)
+
+
+		private static string GetDictionariesVariables(IEnumerable<ClassProperty> properties)
 		{
-			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
-			if (table == null) throw new ArgumentNullException(nameof(table));
-			if (config == null) throw new ArgumentNullException(nameof(config));
+			var buffer = new StringBuilder();
 
-			var template = @"
-public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache)
-{{
-	if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
-	if (cache == null) throw new ArgumentNullException(nameof(cache));
-
-	var items = new Dictionary<long, {1}>();
-	{4}
-	var query = new Query<{1}>(@""{0}"", r =>
-	{{
-		{3}
-	}});
-	foreach (var item in dbContext.Execute(query))
-	{{
-		items.Add(item.Id, item);
-	}}
-
-	return items;
-}}";
-
-			var entityConfig = config.GetEntityConfig(table.Name);
-			var className = entityConfig.ClassName;
-			var properties = GetProperties(table, config, entityConfig);
-
-			var creator = CreatorMethod(table, config, properties);
-
-
-			var cache = new StringBuilder();
-			foreach (var column in entityConfig.GetSelectColumns(table.Columns))
+			foreach (var property in properties)
 			{
-				if (column.ForeignKey != null)
+				var referenceEntityConfig = property.ReferenceEntityConfig;
+				if (referenceEntityConfig != null)
 				{
-					if (cache.Length > 0)
+					if (buffer.Length > 0)
 					{
-						cache.AppendLine();
+						buffer.AppendLine();
 					}
 
-					var referenceEntityConfig = config.GetEntityConfig(column.ForeignKey.TableName);
-
-					cache.Append(@"var");
-					cache.Append(@" ");
-					cache.Append(NameProvider.GetVariableName(referenceEntityConfig.ClassPluralName));
-					cache.Append(@" = ");
-					cache.Append(@"cache.GetData");
-					cache.Append(@"<");
-					cache.Append(referenceEntityConfig.ClassName);
-					cache.Append(@">");
-					cache.Append(@"(");
-					cache.Append(@"dbContext");
-					cache.Append(@")");
-					cache.Append(@";");
+					buffer.Append(@"var");
+					buffer.Append(@" ");
+					buffer.Append(NameProvider.GetVariableName(referenceEntityConfig.ClassPluralName));
+					buffer.Append(@" = ");
+					buffer.Append(@"cache.GetData");
+					buffer.Append(@"<");
+					buffer.Append(referenceEntityConfig.ClassName);
+					buffer.Append(@">");
+					buffer.Append(@"(");
+					buffer.Append(@"dbContext");
+					buffer.Append(@")");
+					buffer.Append(@";");
 				}
 			}
-			if (cache.Length > 0)
+
+			if (buffer.Length > 0)
 			{
-				cache.Insert(0, Environment.NewLine);
-				cache.AppendLine();
+				buffer.Insert(0, Environment.NewLine);
+				buffer.AppendLine();
 			}
 
-			var selectSql = new StringBuilder();
-			SqlGenerator.Select(selectSql, table, entityConfig);
-			buffer.AppendFormat(template, selectSql, entityConfig.ClassName, entityConfig.ClassPluralName, creator, cache);
+			return buffer.ToString();
 		}
 
-		private static StringBuilder CreatorMethod(Table table, ProjectConfig config, IEnumerable<ClassProperty> properties)
+		private static string GetCreator(string className, IEnumerable<ClassProperty> properties)
 		{
-			var creator = new StringBuilder();
-
-			var entityConfig = config.GetEntityConfig(table.Name);
+			var buffer = new StringBuilder();
+			var args = new StringBuilder();
 
 			var index = 0;
 			foreach (var property in properties)
 			{
-				if (creator.Length > 0)
+				if (buffer.Length > 0)
 				{
-					creator.AppendLine();
-					creator.Append("\t\t");
+					buffer.AppendLine();
+				}
+				if (args.Length > 0)
+				{
+					args.Append(@",");
+					args.Append(@" ");
 				}
 
-				var column = property.Column;
+				var variableName = property.VariableName;
 
-				creator.Append(@"var");
-				creator.Append(@" ");
-				creator.Append(property.VariableName);
-				creator.Append(@" = ");
-				if (column.ForeignKey != null)
+				buffer.Append(@"var");
+				buffer.Append(@" ");
+				buffer.Append(variableName);
+				buffer.Append(@" = ");
+				var referenceEntityConfig = property.ReferenceEntityConfig;
+				if (referenceEntityConfig != null)
 				{
-					creator.Append(NameProvider.GetVariableName(config.GetEntityConfig(column.ForeignKey.TableName).ClassPluralName));
-					creator.Append(@"[");
+					buffer.Append(NameProvider.GetVariableName(referenceEntityConfig.ClassPluralName));
+					buffer.Append(@"[");
 				}
-				ReadDbValue(creator, column.Type, column.Name, index++);
-				if (column.ForeignKey != null)
+				ReadDbValue(buffer, property.Column, index++);
+				if (referenceEntityConfig != null)
 				{
-					creator.Append(@"]");
+					buffer.Append(@"]");
 				}
-				creator.Append(@";");
+				buffer.Append(@";");
+
+				args.Append(variableName);
 			}
 
-			creator.AppendLine();
-			creator.Append("\t\t");
-			creator.AppendLine();
-			creator.Append("\t\t");
-			creator.AppendFormat(@"return new {0}({1});", entityConfig.ClassName, string.Join(@", ", properties.Select(p => p.VariableName)));
+			buffer.AppendLine();
+			buffer.AppendLine();
 
-			return creator;
+			buffer.Append(@"return");
+			buffer.Append(@" ");
+			buffer.Append(@"new");
+			buffer.Append(@" ");
+			buffer.Append(className);
+			buffer.Append(@"(");
+			buffer.Append(args);
+			buffer.Append(@")");
+			buffer.Append(@";");
+
+			return buffer.ToString();
 		}
 
-		private static void ReadDbValue(StringBuilder buffer, SqlDataType type, string name, int index)
+		private static void ReadDbValue(StringBuilder buffer, Column column, int index)
 		{
-			switch (type)
+			switch (column.Type)
 			{
 				case SqlDataType.Int:
 					buffer.AppendFormat(@"Query.GetInt(r, {0})", index);
@@ -311,14 +338,14 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 				case SqlDataType.DateTime:
 					buffer.AppendFormat(@"Query.GetDateTime(r, {0})", index);
 					// Apply convention for dates
-					if (name.IndexOf(@"_FROM", StringComparison.OrdinalIgnoreCase) >= 0)
+					if (column.Name.IndexOf(@"_FROM", StringComparison.OrdinalIgnoreCase) >= 0)
 					{
 						buffer.Append(@" ");
 						buffer.Append(@"??");
 						buffer.Append(@" ");
 						buffer.Append(@"DateTime.MinValue");
 					}
-					if (name.IndexOf(@"_TO", StringComparison.OrdinalIgnoreCase) >= 0)
+					if (column.Name.IndexOf(@"_TO", StringComparison.OrdinalIgnoreCase) >= 0)
 					{
 						buffer.Append(@" ");
 						buffer.Append(@"??");
