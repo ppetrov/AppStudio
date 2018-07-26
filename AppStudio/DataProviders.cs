@@ -23,8 +23,8 @@ var flavours = cache.GetData<Flavour>(dbContext);
 var name = Query.GetString(r, 1);
 var brand = brands[Query.GetLong(r, 2)];
 var flavour = flavours[Query.GetLong(r, 3)];
-var validFrom = Query.GetDateTime(r, 4) ?? DateTime.MinValue;
-var validTo = Query.GetDateTime(r, 5) ?? DateTime.MaxValue;
+var validFrom = Query.GetDateTime(r, 4);
+var validTo = Query.GetDateTime(r, 5);
 
 return new Article(id, name, brand, flavour, validFrom, validTo);
 	});

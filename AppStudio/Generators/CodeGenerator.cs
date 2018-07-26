@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using AppStudio.Config;
 using AppStudio.Db;
@@ -87,12 +88,12 @@ namespace AppStudio.Generators
 			if (config == null) throw new ArgumentNullException(nameof(config));
 
 			const string template = @"
-public static Dictionary<long, {0}> Get{1}(IDbContext dbContext, DataCache cache)
+public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 {{
 	if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
 	if (cache == null) throw new ArgumentNullException(nameof(cache));
 
-	var items = new Dictionary<long, {0}>();
+	var items = new Dictionary<{5}, {0}>();
 	{4}
 	var query = new Query<{0}>(@""{2}"", r =>
 	{{
@@ -100,7 +101,7 @@ public static Dictionary<long, {0}> Get{1}(IDbContext dbContext, DataCache cache
 	}});
 	foreach (var item in dbContext.Execute(query))
 	{{
-		items.Add(item.Id, item);
+		items.Add(item.{6}, item);
 	}}
 
 	return items;
@@ -109,13 +110,18 @@ public static Dictionary<long, {0}> Get{1}(IDbContext dbContext, DataCache cache
 			var entityConfig = config.GetEntityConfig(table.Name);
 			var className = entityConfig.ClassName;
 			var properties = GetProperties(table, config, entityConfig);
+			var pk = properties.SingleOrDefault(p => p.Column.IsPrimaryKey);
+			var primaryKeyType = pk.Type;
+			var primaryKey = pk.Name;
 
 			buffer.AppendFormat(template,
 				className,
 				entityConfig.ClassPluralName,
 				SqlGenerator.Select(table, entityConfig),
 				GetCreator(className, properties),
-				GetDictionariesVariables(properties));
+				GetDictionariesVariables(properties),
+				primaryKeyType,
+				primaryKey);
 		}
 
 
@@ -337,6 +343,8 @@ public static Dictionary<long, {0}> Get{1}(IDbContext dbContext, DataCache cache
 					break;
 				case SqlDataType.DateTime:
 					buffer.AppendFormat(@"Query.GetDateTime(r, {0})", index);
+
+#if !DEBUG
 					// Apply convention for dates
 					if (column.Name.IndexOf(@"_FROM", StringComparison.OrdinalIgnoreCase) >= 0)
 					{
@@ -352,6 +360,7 @@ public static Dictionary<long, {0}> Get{1}(IDbContext dbContext, DataCache cache
 						buffer.Append(@" ");
 						buffer.Append(@"DateTime.MaxValue");
 					}
+#endif
 					break;
 				case SqlDataType.String:
 					buffer.AppendFormat(@"Query.GetString(r, {0})", index);

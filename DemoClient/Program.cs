@@ -40,7 +40,8 @@ namespace DemoClient
 						table.Name.IndexOf(@"Asset_Class", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						table.Name.IndexOf(@"open_bala", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						table.Name.IndexOf(@"factory_cal", StringComparison.OrdinalIgnoreCase) >= 0 ||
-						table.Name.IndexOf(@"Visit_dat", StringComparison.OrdinalIgnoreCase) >= 0)
+						table.Name.IndexOf(@"Visit_dat", StringComparison.OrdinalIgnoreCase) >= 0 ||
+						table.Name.IndexOf(@"Temp_data", StringComparison.OrdinalIgnoreCase) >= 0)
 					{
 						continue;
 					}
@@ -103,12 +104,12 @@ namespace DemoClient
 					//code.AppendLine(buffer.ToString());
 				}
 
-				var cache = new DataCache();
-				cache.Register(DataProviders.GetBrandKinds);
-				cache.Register(DataProviders.GetBrands);
-				cache.Register(DataProviders.GetFlavours);
-				var arts = DataProviders.GetArticles(ctx, cache);
-				Console.WriteLine(arts.Count);
+				//var cache = new DataCache();
+				//cache.Register(DataProviders.GetBrandKinds);
+				//cache.Register(DataProviders.GetBrands);
+				//cache.Register(DataProviders.GetFlavours);
+				//var arts = DataProviders.GetArticles(ctx, cache);
+				//Console.WriteLine(arts.Count);
 
 				ctx.Complete();
 			}
