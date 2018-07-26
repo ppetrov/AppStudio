@@ -25,6 +25,7 @@ var flavours = cache.GetData<Flavour>(dbContext);
 		var flavour = flavours[Query.GetLong(r, 3)];
 		var validFrom = Query.GetDateTime(r, 4) ?? DateTime.MinValue;
 		var validTo = Query.GetDateTime(r, 5) ?? DateTime.MaxValue;
+		
 		return new Article(id, name, brand, flavour, validFrom, validTo);
 	});
 	foreach (var item in dbContext.Execute(query))
@@ -46,6 +47,7 @@ public static Dictionary<long, BrandKind> GetBrandKinds(IDbContext dbContext, Da
 	{
 		var id = Query.GetLong(r, 0);
 		var name = Query.GetString(r, 1);
+		
 		return new BrandKind(id, name);
 	});
 	foreach (var item in dbContext.Execute(query))
@@ -70,6 +72,7 @@ var brandKinds = cache.GetData<BrandKind>(dbContext);
 		var id = Query.GetLong(r, 0);
 		var name = Query.GetString(r, 1);
 		var brandKind = brandKinds[Query.GetLong(r, 2)];
+		
 		return new Brand(id, name, brandKind);
 	});
 	foreach (var item in dbContext.Execute(query))
@@ -91,6 +94,7 @@ public static Dictionary<long, Flavour> GetFlavours(IDbContext dbContext, DataCa
 	{
 		var id = Query.GetLong(r, 0);
 		var name = Query.GetString(r, 1);
+		
 		return new Flavour(id, name);
 	});
 	foreach (var item in dbContext.Execute(query))

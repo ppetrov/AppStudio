@@ -11,19 +11,19 @@ namespace AppStudio.Generators
 	{
 		private sealed class ClassProperty
 		{
-			public string Type { get; }
-			public bool IsReferenceType { get; }
-			public string Name { get; }
-			public string VariableName { get; }
-			public string VariableDeclaration { get; }
+			public readonly Column Column;
+			public readonly string Type;
+			public readonly bool IsReferenceType;
+			public readonly string Name;
+			public readonly string VariableName;
 
-			private ClassProperty(string type, bool isReferenceType, string name)
+			private ClassProperty(Column column, string type, bool isReferenceType, string name)
 			{
+				this.Column = column;
 				this.Type = type;
 				this.IsReferenceType = isReferenceType;
 				this.Name = name;
 				this.VariableName = NameProvider.GetVariableName(name);
-				this.VariableDeclaration = type + @" " + this.VariableName;
 			}
 
 			public static ClassProperty From(Column column, ProjectConfig config)
@@ -34,7 +34,7 @@ namespace AppStudio.Generators
 					? NameProvider.GetPropertyName(column.Name)
 					: type.Key;
 
-				return new ClassProperty(type.Key, type.Value, name);
+				return new ClassProperty(column, type.Key, type.Value, name);
 			}
 		}
 
@@ -59,12 +59,12 @@ namespace AppStudio.Generators
 
 			var properties = GetProperties(table, config, entityConfig);
 			// Properties
-			CreateProperties(buffer, properties);
+			AppendProperties(buffer, properties);
 
 			buffer.AppendLine();
 
 			// Constructor
-			CreateConstructor(buffer, properties, className);
+			AppendConstructor(buffer, properties, className);
 
 			buffer.AppendLine(@"}");
 		}
@@ -81,7 +81,7 @@ namespace AppStudio.Generators
 			return properties;
 		}
 
-		private static void CreateProperties(StringBuilder buffer, IEnumerable<ClassProperty> properties)
+		private static void AppendProperties(StringBuilder buffer, IEnumerable<ClassProperty> properties)
 		{
 			foreach (var property in properties)
 			{
@@ -97,7 +97,7 @@ namespace AppStudio.Generators
 			}
 		}
 
-		private static void CreateConstructor(StringBuilder buffer, List<ClassProperty> properties, string className)
+		private static void AppendConstructor(StringBuilder buffer, List<ClassProperty> properties, string className)
 		{
 			buffer.Append('\t');
 			buffer.Append(@"public");
@@ -105,7 +105,27 @@ namespace AppStudio.Generators
 			buffer.Append(className);
 			buffer.Append(@"(");
 			// Parameters
+			AppendConstructorParameters(buffer, properties);
+			buffer.Append(@")");
+			buffer.AppendLine();
+
+			buffer.Append('\t');
+			buffer.AppendLine(@"{");
+
+			// Parameters guards
+			AppendParametersGuards(buffer, properties);
+
+			// Assign Parameters
+			AppendAssignParameters(buffer, properties);
+
+			buffer.Append('\t');
+			buffer.AppendLine(@"}");
+		}
+
+		private static void AppendConstructorParameters(StringBuilder buffer, IEnumerable<ClassProperty> properties)
+		{
 			var addComma = false;
+
 			foreach (var property in properties)
 			{
 				if (addComma)
@@ -114,24 +134,27 @@ namespace AppStudio.Generators
 					buffer.Append(@" ");
 				}
 
-				buffer.Append(property.VariableDeclaration);
+				buffer.Append(property.Type);
+				buffer.Append(@" ");
+				buffer.Append(property.VariableName);
+
 				addComma = true;
 			}
+		}
 
-			buffer.Append(@")");
-			buffer.AppendLine();
-			buffer.Append('\t');
-			buffer.AppendLine(@"{");
-
-			// Add guards
+		private static void AppendParametersGuards(StringBuilder buffer, IEnumerable<ClassProperty> properties)
+		{
 			var hasGuards = false;
+
 			foreach (var property in properties)
 			{
 				if (property.IsReferenceType)
 				{
 					hasGuards = true;
+
 					var variableName = property.VariableName;
-					buffer.AppendFormat($"\t\tif ({variableName} == null) throw new ArgumentNullException(nameof({variableName}));");
+					buffer.Append("\t\t");
+					buffer.AppendFormat($"if ({variableName} == null) throw new ArgumentNullException(nameof({variableName}));");
 					buffer.AppendLine();
 				}
 			}
@@ -140,21 +163,24 @@ namespace AppStudio.Generators
 			{
 				buffer.AppendLine();
 			}
+		}
 
-			// Assign parameters to properties
+		private static void AppendAssignParameters(StringBuilder buffer, IEnumerable<ClassProperty> properties)
+		{
 			foreach (var property in properties)
 			{
-				buffer.Append("\t\tthis.");
+				buffer.Append("\t\t");
+				buffer.Append(@"this");
+				buffer.Append(@".");
 				buffer.Append(property.Name);
 				buffer.Append(@" = ");
 				buffer.Append(property.VariableName);
 				buffer.Append(@";");
 				buffer.AppendLine();
 			}
-
-			buffer.Append('\t');
-			buffer.AppendLine(@"}");
 		}
+
+
 
 		public static void GenerateGetAll(StringBuilder buffer, Table table, ProjectConfig config)
 		{
@@ -182,9 +208,12 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 	return items;
 }}";
 
-			var creator = CreatorMethod(table, config);
-
 			var entityConfig = config.GetEntityConfig(table.Name);
+			var className = entityConfig.ClassName;
+			var properties = GetProperties(table, config, entityConfig);
+
+			var creator = CreatorMethod(table, config, properties);
+
 
 			var cache = new StringBuilder();
 			foreach (var column in entityConfig.GetSelectColumns(table.Columns))
@@ -223,26 +252,22 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 			buffer.AppendFormat(template, selectSql, entityConfig.ClassName, entityConfig.ClassPluralName, creator, cache);
 		}
 
-		private static StringBuilder CreatorMethod(Table table, ProjectConfig config)
+		private static StringBuilder CreatorMethod(Table table, ProjectConfig config, IEnumerable<ClassProperty> properties)
 		{
 			var creator = new StringBuilder();
 
 			var entityConfig = config.GetEntityConfig(table.Name);
 
-			var properties = new List<ClassProperty>(table.Columns.Length);
-
 			var index = 0;
-			foreach (var column in entityConfig.GetSelectColumns(table.Columns))
+			foreach (var property in properties)
 			{
-				var property = ClassProperty.From(column, config);
-
-				properties.Add(property);
-
 				if (creator.Length > 0)
 				{
 					creator.AppendLine();
 					creator.Append("\t\t");
 				}
+
+				var column = property.Column;
 
 				creator.Append(@"var");
 				creator.Append(@" ");
@@ -253,7 +278,7 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 					creator.Append(NameProvider.GetVariableName(config.GetEntityConfig(column.ForeignKey.TableName).ClassPluralName));
 					creator.Append(@"[");
 				}
-				ReadDbValue(creator, column, index++);
+				ReadDbValue(creator, column.Type, column.Name, index++);
 				if (column.ForeignKey != null)
 				{
 					creator.Append(@"]");
@@ -263,14 +288,16 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 
 			creator.AppendLine();
 			creator.Append("\t\t");
+			creator.AppendLine();
+			creator.Append("\t\t");
 			creator.AppendFormat(@"return new {0}({1});", entityConfig.ClassName, string.Join(@", ", properties.Select(p => p.VariableName)));
 
 			return creator;
 		}
 
-		private static void ReadDbValue(StringBuilder buffer, Column column, int index)
+		private static void ReadDbValue(StringBuilder buffer, SqlDataType type, string name, int index)
 		{
-			switch (column.Type)
+			switch (type)
 			{
 				case SqlDataType.Int:
 					buffer.AppendFormat(@"Query.GetInt(r, {0})", index);
@@ -284,14 +311,14 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 				case SqlDataType.DateTime:
 					buffer.AppendFormat(@"Query.GetDateTime(r, {0})", index);
 					// Apply convention for dates
-					if (column.Name.IndexOf(@"_FROM", StringComparison.OrdinalIgnoreCase) >= 0)
+					if (name.IndexOf(@"_FROM", StringComparison.OrdinalIgnoreCase) >= 0)
 					{
 						buffer.Append(@" ");
 						buffer.Append(@"??");
 						buffer.Append(@" ");
 						buffer.Append(@"DateTime.MinValue");
 					}
-					if (column.Name.IndexOf(@"_TO", StringComparison.OrdinalIgnoreCase) >= 0)
+					if (name.IndexOf(@"_TO", StringComparison.OrdinalIgnoreCase) >= 0)
 					{
 						buffer.Append(@" ");
 						buffer.Append(@"??");
