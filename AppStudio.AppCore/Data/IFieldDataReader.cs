@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AppStudio.Data
+namespace AppCore.Data
 {
 	public interface IFieldDataReader
 	{

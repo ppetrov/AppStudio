@@ -9,7 +9,7 @@ namespace AppStudio.Generators
 {
 	public static class CodeGenerator
 	{
-		private sealed class ClassProperty
+		private sealed class Property
 		{
 			public readonly Column Column;
 			public readonly EntityConfig ReferenceEntityConfig;
@@ -18,7 +18,7 @@ namespace AppStudio.Generators
 			public readonly string Name;
 			public readonly string VariableName;
 
-			private ClassProperty(Column column, string type, bool isReferenceType, string name, EntityConfig referenceEntityConfig)
+			private Property(Column column, string type, bool isReferenceType, string name, EntityConfig referenceEntityConfig)
 			{
 				this.Column = column;
 				this.ReferenceEntityConfig = referenceEntityConfig;
@@ -28,7 +28,7 @@ namespace AppStudio.Generators
 				this.VariableName = NameProvider.GetVariableName(name);
 			}
 
-			public static ClassProperty From(Column column, ProjectConfig config)
+			public static Property From(Column column, ProjectConfig config)
 			{
 				var type = MapType(column, config);
 
@@ -46,7 +46,7 @@ namespace AppStudio.Generators
 					entityConfig = config.GetEntityConfig(column.ForeignKey.TableName);
 				}
 
-				return new ClassProperty(column, type.Key, type.Value, name, entityConfig);
+				return new Property(column, type.Key, type.Value, name, entityConfig);
 			}
 		}
 
@@ -125,19 +125,19 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 		}
 
 
-		private static List<ClassProperty> GetProperties(Table table, ProjectConfig config, EntityConfig entityConfig)
+		private static List<Property> GetProperties(Table table, ProjectConfig config, EntityConfig entityConfig)
 		{
-			var properties = new List<ClassProperty>(table.Columns.Length);
+			var properties = new List<Property>(table.Columns.Length);
 
 			foreach (var column in entityConfig.GetSelectColumns(table.Columns))
 			{
-				properties.Add(ClassProperty.From(column, config));
+				properties.Add(Property.From(column, config));
 			}
 
 			return properties;
 		}
 
-		private static void AppendProperties(StringBuilder buffer, IEnumerable<ClassProperty> properties)
+		private static void AppendProperties(StringBuilder buffer, IEnumerable<Property> properties)
 		{
 			foreach (var property in properties)
 			{
@@ -152,7 +152,7 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 			}
 		}
 
-		private static void AppendConstructor(StringBuilder buffer, List<ClassProperty> properties, string className)
+		private static void AppendConstructor(StringBuilder buffer, List<Property> properties, string className)
 		{
 			buffer.Append(@"public");
 			buffer.Append(@" ");
@@ -174,7 +174,7 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 			buffer.AppendLine(@"}");
 		}
 
-		private static void AppendConstructorParameters(StringBuilder buffer, IEnumerable<ClassProperty> properties)
+		private static void AppendConstructorParameters(StringBuilder buffer, IEnumerable<Property> properties)
 		{
 			var addComma = false;
 
@@ -194,7 +194,7 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 			}
 		}
 
-		private static void AppendParametersGuards(StringBuilder buffer, IEnumerable<ClassProperty> properties)
+		private static void AppendParametersGuards(StringBuilder buffer, IEnumerable<Property> properties)
 		{
 			var hasGuards = false;
 
@@ -216,7 +216,7 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 			}
 		}
 
-		private static void AppendAssignParameters(StringBuilder buffer, IEnumerable<ClassProperty> properties)
+		private static void AppendAssignParameters(StringBuilder buffer, IEnumerable<Property> properties)
 		{
 			foreach (var property in properties)
 			{
@@ -230,11 +230,7 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 			}
 		}
 
-
-
-
-
-		private static string GetDictionariesVariables(IEnumerable<ClassProperty> properties)
+		private static string GetDictionariesVariables(IEnumerable<Property> properties)
 		{
 			var buffer = new StringBuilder();
 
@@ -272,7 +268,7 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 			return buffer.ToString();
 		}
 
-		private static string GetCreator(string className, IEnumerable<ClassProperty> properties)
+		private static string GetCreator(string className, IEnumerable<Property> properties)
 		{
 			var buffer = new StringBuilder();
 			var args = new StringBuilder();
@@ -375,7 +371,6 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 					throw new ArgumentOutOfRangeException();
 			}
 		}
-
 
 		private static KeyValuePair<string, bool> MapType(Column column, ProjectConfig config)
 		{

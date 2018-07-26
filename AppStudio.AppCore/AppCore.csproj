@@ -2,10 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
+    <AssemblyName>AppCore</AssemblyName>
+    <RootNamespace>AppCore</RootNamespace>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\AppStudio.AppCore\AppCore.csproj" />
-  </ItemGroup>
 
 </Project>

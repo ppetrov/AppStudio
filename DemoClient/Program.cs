@@ -22,8 +22,8 @@ namespace DemoClient
 			var projectConfig = new ProjectConfig();
 			projectConfig.Add(new EntityConfig(@"ACTIVATION_COMPLIANCES"));
 			// TODO : !!!
-			//dbConfig.Load(null); // load to a file
-			//dbConfig.Save(null); // save to a file
+			//projectConfig.Load(null); // load to a file
+			//projectConfig.Save(null); // save to a file
 
 			var cnString = $@"Data Source = {path}; Version = 3;";
 
@@ -129,7 +129,8 @@ namespace AppStudio
 
 			File.WriteAllText(@"C:\Atos\AppStudio\DataProviders.cs", string.Format(@"using System;
 using System.Collections.Generic;
-using AppStudio.Data;
+using AppCore;
+using AppCore.Data;
 
 namespace AppStudio
 {{

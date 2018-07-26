@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using AppStudio.Data;
+using AppCore.Data;
 
 namespace AppStudio.Db
 {

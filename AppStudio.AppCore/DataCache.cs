@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using AppStudio.Data;
+using AppCore.Data;
 
-namespace AppStudio
+namespace AppCore
 {
 	public sealed class DataCache
 	{
@@ -41,7 +41,7 @@ namespace AppStudio
 			this.Data.Clear();
 		}
 
-		public void InvalidateData<T>()
+		public void Invalidate<T>()
 		{
 			var key = typeof(T).FullName;
 			this.Data.Remove(key);

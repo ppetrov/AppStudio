@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
-using AppStudio.Data;
+using AppCore;
+using AppCore.Data;
 
 namespace AppStudio
 {

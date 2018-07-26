@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AppStudio.Data
+namespace AppCore.Data
 {
 	public interface IDbContext : IDisposable
 	{
