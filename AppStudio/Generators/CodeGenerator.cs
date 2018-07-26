@@ -14,16 +14,14 @@ namespace AppStudio.Generators
 			public string Type { get; }
 			public bool IsReferenceType { get; }
 			public string Name { get; }
-			public string Body { get; }
 			public string VariableName { get; }
 			public string VariableDeclaration { get; }
 
-			private ClassProperty(string type, bool isReferenceType, string name, string body)
+			private ClassProperty(string type, bool isReferenceType, string name)
 			{
 				this.Type = type;
 				this.IsReferenceType = isReferenceType;
 				this.Name = name;
-				this.Body = body;
 				this.VariableName = NameProvider.GetVariableName(name);
 				this.VariableDeclaration = type + @" " + this.VariableName;
 			}
@@ -36,7 +34,7 @@ namespace AppStudio.Generators
 					? NameProvider.GetPropertyName(column.Name)
 					: type.Key;
 
-				return new ClassProperty(type.Key, type.Value, name, @"{ get; }");
+				return new ClassProperty(type.Key, type.Value, name);
 			}
 		}
 
@@ -47,23 +45,44 @@ namespace AppStudio.Generators
 			if (config == null) throw new ArgumentNullException(nameof(config));
 
 			var entityConfig = config.GetEntityConfig(table.Name);
+			var className = entityConfig.ClassName;
 
+			// Definition
 			buffer.Append(@"public");
 			buffer.Append(@" ");
 			buffer.Append(@"sealed");
 			buffer.Append(@" ");
 			buffer.Append(@"class");
 			buffer.Append(@" ");
-			buffer.AppendLine(entityConfig.ClassName);
+			buffer.AppendLine(className);
 			buffer.AppendLine(@"{");
 
-			var properties = new List<ClassProperty>();
+			var properties = GetProperties(table, config, entityConfig);
+			// Properties
+			CreateProperties(buffer, properties);
+
+			buffer.AppendLine();
+
+			// Constructor
+			CreateConstructor(buffer, properties, className);
+
+			buffer.AppendLine(@"}");
+		}
+
+		private static List<ClassProperty> GetProperties(Table table, ProjectConfig config, EntityConfig entityConfig)
+		{
+			var properties = new List<ClassProperty>(table.Columns.Length);
 
 			foreach (var column in entityConfig.GetSelectColumns(table.Columns))
 			{
 				properties.Add(ClassProperty.From(column, config));
 			}
 
+			return properties;
+		}
+
+		private static void CreateProperties(StringBuilder buffer, IEnumerable<ClassProperty> properties)
+		{
 			foreach (var property in properties)
 			{
 				buffer.Append('\t');
@@ -73,22 +92,17 @@ namespace AppStudio.Generators
 				buffer.Append(@" ");
 				buffer.Append(property.Name);
 				buffer.Append(@" ");
-				buffer.Append(property.Body);
+				buffer.Append(@"{ get; }");
 				buffer.AppendLine();
 			}
-
-			CreateConstructor(buffer, entityConfig, properties);
-
-			buffer.AppendLine(@"}");
 		}
 
-		private static void CreateConstructor(StringBuilder buffer, EntityConfig entityConfig, List<ClassProperty> properties)
+		private static void CreateConstructor(StringBuilder buffer, List<ClassProperty> properties, string className)
 		{
-			buffer.AppendLine();
 			buffer.Append('\t');
 			buffer.Append(@"public");
 			buffer.Append(@" ");
-			buffer.Append(entityConfig.ClassName);
+			buffer.Append(className);
 			buffer.Append(@"(");
 			// Parameters
 			var addComma = false;
@@ -116,8 +130,8 @@ namespace AppStudio.Generators
 				if (property.IsReferenceType)
 				{
 					hasGuards = true;
-					var varName = property.VariableName;
-					buffer.AppendFormat($"\t\tif ({varName} == null) throw new ArgumentNullException(nameof({varName}));");
+					var variableName = property.VariableName;
+					buffer.AppendFormat($"\t\tif ({variableName} == null) throw new ArgumentNullException(nameof({variableName}));");
 					buffer.AppendLine();
 				}
 			}
@@ -299,32 +313,38 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 			}
 		}
 
+
 		private static KeyValuePair<string, bool> MapType(Column column, ProjectConfig config)
 		{
 			if (column.ForeignKey == null)
 			{
-				switch (column.Type)
-				{
-					case SqlDataType.Int:
-						return new KeyValuePair<string, bool>(@"int", false);
-					case SqlDataType.Long:
-						return new KeyValuePair<string, bool>(@"long", false);
-					case SqlDataType.Decimal:
-						return new KeyValuePair<string, bool>(@"decimal", false);
-					case SqlDataType.DateTime:
-						return new KeyValuePair<string, bool>(@"DateTime", false);
-					case SqlDataType.String:
-						return new KeyValuePair<string, bool>(@"string", true);
-					case SqlDataType.ByteArray:
-						return new KeyValuePair<string, bool>(@"byte[]", true);
-					case SqlDataType.Guid:
-						return new KeyValuePair<string, bool>(@"string", true);
-					default:
-						throw new ArgumentOutOfRangeException(nameof(column.Type), column.Type, null);
-				}
+				return MapType(column.Type);
 			}
 
 			return new KeyValuePair<string, bool>(config.GetEntityConfig(column.ForeignKey.TableName).ClassName, true);
+		}
+
+		private static KeyValuePair<string, bool> MapType(SqlDataType type)
+		{
+			switch (type)
+			{
+				case SqlDataType.Int:
+					return new KeyValuePair<string, bool>(@"int", false);
+				case SqlDataType.Long:
+					return new KeyValuePair<string, bool>(@"long", false);
+				case SqlDataType.Decimal:
+					return new KeyValuePair<string, bool>(@"decimal", false);
+				case SqlDataType.DateTime:
+					return new KeyValuePair<string, bool>(@"DateTime", false);
+				case SqlDataType.String:
+					return new KeyValuePair<string, bool>(@"string", true);
+				case SqlDataType.ByteArray:
+					return new KeyValuePair<string, bool>(@"byte[]", true);
+				case SqlDataType.Guid:
+					return new KeyValuePair<string, bool>(@"string", true);
+				default:
+					throw new ArgumentOutOfRangeException(nameof(type), type, null);
+			}
 		}
 	}
 }
