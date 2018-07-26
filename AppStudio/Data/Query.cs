@@ -68,11 +68,11 @@ namespace AppStudio.Data
 			return r.IsDbNull(index) ? null : r.GetByteArray(index);
 		}
 
-		public static DateTime GetDateTime(IFieldDataReader r, int index)
+		public static DateTime? GetDateTime(IFieldDataReader r, int index)
 		{
 			if (r == null) throw new ArgumentNullException(nameof(r));
 
-			return r.IsDbNull(index) ? DateTime.MinValue : r.GetDateTime(index);
+			return r.IsDbNull(index) ? default(DateTime?) : r.GetDateTime(index);
 		}
 
 		public static string GetGuid(IFieldDataReader r, int index)

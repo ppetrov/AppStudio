@@ -8,9 +8,8 @@ namespace AppStudio.Config
 {
 	public sealed class ProjectConfig
 	{
-		public Table[] Tables { get; set; }
-
 		private Dictionary<string, EntityConfig> EntityConfigs { get; } = new Dictionary<string, EntityConfig>(StringComparer.OrdinalIgnoreCase);
+		private Dictionary<string, EntityConfig[]> ReferenceEntitiesConfigs { get; } = new Dictionary<string, EntityConfig[]>(StringComparer.OrdinalIgnoreCase);
 
 		public void Add(EntityConfig config)
 		{
@@ -23,9 +22,21 @@ namespace AppStudio.Config
 		{
 			if (tableName == null) throw new ArgumentNullException(nameof(tableName));
 
-			this.EntityConfigs.TryGetValue(tableName, out var config);
+			if (!this.EntityConfigs.TryGetValue(tableName, out var config))
+			{
+				config = new EntityConfig(tableName);
+				this.EntityConfigs.Add(tableName, config);
+			}
 
-			return config ?? new EntityConfig(tableName);
+			return config;
+		}
+
+		public EntityConfig[] GetReferenceEntityConfigs(string tableName)
+		{
+			if (tableName == null) throw new ArgumentNullException(nameof(tableName));
+
+			this.ReferenceEntitiesConfigs.TryGetValue(tableName, out var configs);
+			return configs;
 		}
 
 		public void Save(FileInfo filePath)
@@ -40,60 +51,39 @@ namespace AppStudio.Config
 
 		}
 
-
-
-
-		public EntityConfig[] GetReferenceEntityConfigs(Table table)
+		public void LoadTables(IEnumerable<Table> tables)
 		{
-			if (table == null) throw new ArgumentNullException(nameof(table));
+			if (tables == null) throw new ArgumentNullException(nameof(tables));
 
-			var fkCount = GetForeignKeyCount(table);
-			if (fkCount == 0)
+			var emptyConfigs = Enumerable.Empty<EntityConfig>().ToArray();
+
+			this.ReferenceEntitiesConfigs.Clear();
+
+			foreach (var table in tables)
 			{
-				return Enumerable.Empty<EntityConfig>().ToArray();
-			}
+				var entityConfigs = default(List<EntityConfig>);
 
-			var index = 0;
-			var referenceTables = new EntityConfig[fkCount];
-
-			foreach (var c in table.Columns)
-			{
-				var fk = c.ForeignKey;
-				if (fk != null)
+				foreach (var column in table.Columns)
 				{
-					var referenceTable = GetTable(this.Tables, fk.TableName);					
-					referenceTables[index++] = this.GetEntityConfig(referenceTable.Name);
+					var fk = column.ForeignKey;
+					if (fk != null)
+					{
+						if (entityConfigs == null)
+						{
+							entityConfigs = new List<EntityConfig>();
+						}
+						entityConfigs.Add(this.GetEntityConfig(fk.TableName));
+					}
 				}
-			}
 
-			return referenceTables.ToArray();
-		}
-
-		private static int GetForeignKeyCount(Table table)
-		{
-			var count = 0;
-
-			foreach (var column in table.Columns)
-			{
-				if (column.ForeignKey != null)
+				var configs = emptyConfigs;
+				if (entityConfigs != null)
 				{
-					count++;
+					configs = entityConfigs.ToArray();
 				}
-			}
 
-			return count;
-		}
-
-		private static Table GetTable(Table[] tables, string name)
-		{
-			foreach (var t in tables)
-			{
-				if (t.Name == name)
-				{
-					return t;
-				}
+				this.ReferenceEntitiesConfigs.Add(table.Name, configs);
 			}
-			return null;
 		}
 	}
 }

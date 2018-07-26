@@ -7,8 +7,8 @@ namespace AppStudio.Config
 	public sealed class EntityConfig
 	{
 		public string TableName { get; }
-		public string ClassName { get; set; }
-		public string ClassPluralName { get; set; }
+		public string ClassName { get; }
+		public string ClassPluralName { get; }
 
 		public EntityConfig(string tableName, string className = null, string classPluralName = null)
 		{
