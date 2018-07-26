@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AppStudio", "AppStudio\AppS
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DemoClient", "DemoClient\DemoClient.csproj", "{7468B589-AF58-4B1D-9438-1815B9B9F8BA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppCore", "AppStudio.AppCore\AppCore.csproj", "{D296A361-32D8-4872-9CF2-4BD94D190761}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppCore", "AppCore\AppCore.csproj", "{D296A361-32D8-4872-9CF2-4BD94D190761}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
