@@ -34,8 +34,6 @@ namespace DemoClient
 			{
 				var tables = DataProvider.GetTables(ctx);
 
-				projectConfig.LoadTables(tables);
-
 				foreach (var table in tables)
 				{
 					if (table.Name.Contains('$') ||
@@ -106,7 +104,7 @@ namespace DemoClient
 				}
 
 				var cache = new DataCache();
-				cache.Register(DataProviders.GetBrandkinds);
+				cache.Register(DataProviders.GetBrandKinds);
 				cache.Register(DataProviders.GetBrands);
 				cache.Register(DataProviders.GetFlavours);
 				var arts = DataProviders.GetArticles(ctx, cache);

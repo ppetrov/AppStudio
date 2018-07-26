@@ -26,12 +26,12 @@ namespace AppStudio
 	}
 }
 
-public sealed class Brandkind
+public sealed class BrandKind
 {
 	public long Id { get; }
 	public string Name { get; }
 
-	public Brandkind(long id, string name)
+	public BrandKind(long id, string name)
 	{
 		if (name == null) throw new ArgumentNullException(nameof(name));
 
@@ -44,16 +44,16 @@ public sealed class Brand
 {
 	public long Id { get; }
 	public string Name { get; }
-	public Brandkind Brandkind { get; }
+	public BrandKind BrandKind { get; }
 
-	public Brand(long id, string name, Brandkind brandkind)
+	public Brand(long id, string name, BrandKind brandKind)
 	{
 		if (name == null) throw new ArgumentNullException(nameof(name));
-		if (brandkind == null) throw new ArgumentNullException(nameof(brandkind));
+		if (brandKind == null) throw new ArgumentNullException(nameof(brandKind));
 
 		this.Id = id;
 		this.Name = name;
-		this.Brandkind = brandkind;
+		this.BrandKind = brandKind;
 	}
 }
 

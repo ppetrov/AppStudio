@@ -28,16 +28,13 @@ namespace AppStudio.Generators
 				this.VariableDeclaration = type + @" " + this.VariableName;
 			}
 
-			public static ClassProperty From(Column column, EntityConfig[] referenceEntityConfigs)
+			public static ClassProperty From(Column column, ProjectConfig config)
 			{
-				if (column == null) throw new ArgumentNullException(nameof(column));
-				if (referenceEntityConfigs == null) throw new ArgumentNullException(nameof(referenceEntityConfigs));
-
-				var type = MapType(column, referenceEntityConfigs);
+				var type = MapType(column, config);
 
 				var name = column.ForeignKey == null
 					? NameProvider.GetPropertyName(column.Name)
-					: NameProvider.GetPropertyName(type.Key);
+					: type.Key;
 
 				return new ClassProperty(type.Key, type.Value, name, @"{ get; }");
 			}
@@ -50,7 +47,6 @@ namespace AppStudio.Generators
 			if (config == null) throw new ArgumentNullException(nameof(config));
 
 			var entityConfig = config.GetEntityConfig(table.Name);
-			var referenceEntityConfigs = config.GetReferenceEntityConfigs(table.Name);
 
 			buffer.Append(@"public");
 			buffer.Append(@" ");
@@ -65,7 +61,7 @@ namespace AppStudio.Generators
 
 			foreach (var column in entityConfig.GetSelectColumns(table.Columns))
 			{
-				properties.Add(ClassProperty.From(column, referenceEntityConfigs));
+				properties.Add(ClassProperty.From(column, config));
 			}
 
 			foreach (var property in properties)
@@ -172,31 +168,35 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 	return items;
 }}";
 
-			var entityConfig = config.GetEntityConfig(table.Name);
-			var referenceEntityConfigs = config.GetReferenceEntityConfigs(table.Name);
+			var creator = CreatorMethod(table, config);
 
-			var creator = CreatorMethod(table, referenceEntityConfigs, entityConfig);
+			var entityConfig = config.GetEntityConfig(table.Name);
 
 			var cache = new StringBuilder();
-			foreach (var referenceEntityConfig in referenceEntityConfigs)
+			foreach (var column in entityConfig.GetSelectColumns(table.Columns))
 			{
-				if (cache.Length > 0)
+				if (column.ForeignKey != null)
 				{
-					cache.AppendLine();
-				}
+					if (cache.Length > 0)
+					{
+						cache.AppendLine();
+					}
 
-				cache.Append(@"var");
-				cache.Append(@" ");
-				cache.Append(NameProvider.GetVariableName(referenceEntityConfig.ClassPluralName));
-				cache.Append(@" = ");
-				cache.Append(@"cache.GetData");
-				cache.Append(@"<");
-				cache.Append(referenceEntityConfig.ClassName);
-				cache.Append(@">");
-				cache.Append(@"(");
-				cache.Append(@"dbContext");
-				cache.Append(@")");
-				cache.Append(@";");
+					var referenceEntityConfig = config.GetEntityConfig(column.ForeignKey.TableName);
+
+					cache.Append(@"var");
+					cache.Append(@" ");
+					cache.Append(NameProvider.GetVariableName(referenceEntityConfig.ClassPluralName));
+					cache.Append(@" = ");
+					cache.Append(@"cache.GetData");
+					cache.Append(@"<");
+					cache.Append(referenceEntityConfig.ClassName);
+					cache.Append(@">");
+					cache.Append(@"(");
+					cache.Append(@"dbContext");
+					cache.Append(@")");
+					cache.Append(@";");
+				}
 			}
 			if (cache.Length > 0)
 			{
@@ -209,16 +209,18 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 			buffer.AppendFormat(template, selectSql, entityConfig.ClassName, entityConfig.ClassPluralName, creator, cache);
 		}
 
-		private static StringBuilder CreatorMethod(Table table, EntityConfig[] referenceEntityConfigs, EntityConfig entityConfig)
+		private static StringBuilder CreatorMethod(Table table, ProjectConfig config)
 		{
 			var creator = new StringBuilder();
+
+			var entityConfig = config.GetEntityConfig(table.Name);
 
 			var properties = new List<ClassProperty>(table.Columns.Length);
 
 			var index = 0;
 			foreach (var column in entityConfig.GetSelectColumns(table.Columns))
 			{
-				var property = ClassProperty.From(column, referenceEntityConfigs);
+				var property = ClassProperty.From(column, config);
 
 				properties.Add(property);
 
@@ -234,10 +236,10 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 				creator.Append(@" = ");
 				if (column.ForeignKey != null)
 				{
-					creator.Append(NameProvider.GetVariableName(GetForeignKeyEntityConfig(referenceEntityConfigs, column).ClassPluralName));
+					creator.Append(NameProvider.GetVariableName(config.GetEntityConfig(column.ForeignKey.TableName).ClassPluralName));
 					creator.Append(@"[");
 				}
-				ReadValue(creator, column, index++);
+				ReadDbValue(creator, column, index++);
 				if (column.ForeignKey != null)
 				{
 					creator.Append(@"]");
@@ -252,7 +254,7 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 			return creator;
 		}
 
-		private static void ReadValue(StringBuilder buffer, Column column, int index)
+		private static void ReadDbValue(StringBuilder buffer, Column column, int index)
 		{
 			switch (column.Type)
 			{
@@ -297,7 +299,7 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 			}
 		}
 
-		private static KeyValuePair<string, bool> MapType(Column column, EntityConfig[] referenceEntityConfigs)
+		private static KeyValuePair<string, bool> MapType(Column column, ProjectConfig config)
 		{
 			if (column.ForeignKey == null)
 			{
@@ -322,22 +324,7 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 				}
 			}
 
-			return new KeyValuePair<string, bool>(GetForeignKeyEntityConfig(referenceEntityConfigs, column).ClassName, true);
-		}
-
-		private static EntityConfig GetForeignKeyEntityConfig(IEnumerable<EntityConfig> configs, Column column)
-		{
-			var tableName = column.ForeignKey.TableName;
-
-			foreach (var cfg in configs)
-			{
-				if (cfg.TableName == tableName)
-				{
-					return cfg;
-				}
-			}
-
-			return null;
+			return new KeyValuePair<string, bool>(config.GetEntityConfig(column.ForeignKey.TableName).ClassName, true);
 		}
 	}
 }
