@@ -17,7 +17,7 @@ namespace DemoClient
 		{
 			var path = @"C:\Users\PetarPetrov\AppData\Local\Packages\9ed4bf97-9c34-45dc-a217-5f8121aa6dfc_7gbmn9e1bm2jj\LocalState\ifsa.sqlite";
 
-			path = @"C:\Users\PetarPetrov\Desktop\app_studio.sqlite";
+			//path = @"C:\Users\PetarPetrov\Desktop\app_studio.sqlite";
 
 			var projectConfig = new ProjectConfig();
 			projectConfig.Add(new EntityConfig(@"ACTIVATION_COMPLIANCES"));
@@ -106,12 +106,12 @@ namespace DemoClient
 					//code.AppendLine(buffer.ToString());
 				}
 
-				var cache = new DataCache();
-				cache.Register(DataProviders.GetBrandkinds);
-				cache.Register(DataProviders.GetBrands);
-				cache.Register(DataProviders.GetFlavours);
-				var arts = DataProviders.GetArticles(ctx, cache);
-				Console.WriteLine(arts.Count);
+				//var cache = new DataCache();
+				//cache.Register(DataProviders.GetBrandkinds);
+				//cache.Register(DataProviders.GetBrands);
+				//cache.Register(DataProviders.GetFlavours);
+				//var arts = DataProviders.GetArticles(ctx, cache);
+				//Console.WriteLine(arts.Count);
 
 				ctx.Complete();
 			}

@@ -91,7 +91,7 @@ namespace AppStudio.Db
 			{
 				return SqlDataType.Long;
 			}
-			if (value.Equals(@"NUMERIC", StringComparison.OrdinalIgnoreCase))
+			if (value.IndexOf(@"NUMERIC", StringComparison.OrdinalIgnoreCase) >= 0)
 			{
 				return SqlDataType.Decimal;
 			}

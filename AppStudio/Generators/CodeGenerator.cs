@@ -171,7 +171,7 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 	}});
 	foreach (var item in dbContext.Execute(query))
 	{{
-		items.Add(item.Id, item);
+		items.Add(0L, item);
 	}}
 
 	return items;
@@ -321,6 +321,7 @@ public static Dictionary<long, {1}> Get{2}(IDbContext dbContext, DataCache cache
 			if (referenceEntityConfigs == null) throw new ArgumentNullException(nameof(referenceEntityConfigs));
 
 			var tableName = column.ForeignKey.TableName;
+
 			foreach (var cfg in referenceEntityConfigs)
 			{
 				if (cfg.TableName == tableName)
