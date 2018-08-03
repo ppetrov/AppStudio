@@ -1,6 +1,7 @@
 ﻿using System;
 using AppCore.Features;
 using AppCore.Logs;
+using AppCore.Sort;
 
 namespace AppCore
 {
@@ -47,7 +48,34 @@ namespace AppCore
 		{
 			if (exception == null) throw new ArgumentNullException(nameof(exception));
 
-			this.GetService<IFileLog>().Log(exception.ToString(), LogLevel.Error);
+			this.GetService<ILogger>().Log(exception.ToString(), LogLevel.Error);
+		}
+
+		public void BeginInvokeOnMainThread(Action action)
+		{
+			if (action == null) throw new ArgumentNullException(nameof(action));
+
+			try
+			{
+				action();
+			}
+			catch (Exception ex)
+			{
+				this.Log(ex);
+			}
+		}
+
+		public void SelectSortOption(SortOption[] sortOptions, Action<SortOption> applySort)
+		{
+			if (sortOptions == null) throw new ArgumentNullException(nameof(sortOptions));
+
+			// TODO : !!! Display Sort Options selector
+			Action _ = () =>
+			{
+				// TODO : !!!
+				applySort(default(SortOption));
+			};
+			_();
 		}
 	}
 }

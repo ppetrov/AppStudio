@@ -8,4 +8,8 @@
     <ProjectReference Include="..\AppCore\AppCore.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="EquipmentModule\Views\" />
+  </ItemGroup>
+
 </Project>
