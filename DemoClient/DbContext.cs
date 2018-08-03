@@ -18,6 +18,7 @@ namespace DemoClient
 			if (cnString == null) throw new ArgumentNullException(nameof(cnString));
 
 			_cnString = cnString;
+
 		}
 
 		public int Execute(Query query)

@@ -81,7 +81,45 @@ namespace AppStudio.Generators
 			buffer.AppendLine(@"}");
 		}
 
-		public static void GenerateGetAll(StringBuilder buffer, Table table, ProjectConfig config)
+		public static void GenerateGetAllAsList(StringBuilder buffer, Table table, ProjectConfig config)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (table == null) throw new ArgumentNullException(nameof(table));
+			if (config == null) throw new ArgumentNullException(nameof(config));
+
+			const string template = @"
+public static List<{0}> Get{1}(IDbContext dbContext, DataCache cache)
+{{
+	if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
+	if (cache == null) throw new ArgumentNullException(nameof(cache));
+
+	var items = new List<{0}>();
+	{4}
+	var query = new Query<{0}>(@""{2}"", r =>
+	{{
+	{3}
+	}});
+	foreach (var item in dbContext.Execute(query))
+	{{
+		items.Add(item);
+	}}
+
+	return items;
+}}";
+
+			var entityConfig = config.GetEntityConfig(table.Name);
+			var className = entityConfig.ClassName;
+			var properties = GetProperties(table, config, entityConfig);
+
+			buffer.AppendFormat(template,
+				className,
+				entityConfig.ClassPluralName,
+				SqlGenerator.Select(table, entityConfig),
+				GetCreator(className, properties),
+				GetDictionariesVariables(properties));
+		}
+
+		public static void GenerateGetAllAsDictionary(StringBuilder buffer, Table table, ProjectConfig config)
 		{
 			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 			if (table == null) throw new ArgumentNullException(nameof(table));
