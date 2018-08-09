@@ -115,35 +115,37 @@ namespace AppStudio.Generators
 			GenerateClass(buffer, className, properties, @"ViewModel", AppendViewModelConstructor);
 		}
 
-		private static void GenerateClass(StringBuilder buffer, string className, List<Property> properties, string baseClass = "", Action<StringBuilder, List<Property>, string> constructor = null)
+		public static void GeneratePropertyEnum(StringBuilder buffer, Table table, ProjectConfig config)
 		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (table == null) throw new ArgumentNullException(nameof(table));
+			if (config == null) throw new ArgumentNullException(nameof(config));
+
+			var entityConfig = config.GetEntityConfig(table.Name);
+			var className = entityConfig.ClassName;
+			var properties = GetProperties(table, config, entityConfig);
+
 			// Definition
 			buffer.Append(@"public");
 			buffer.Append(@" ");
-			buffer.Append(@"sealed");
-			buffer.Append(@" ");
-			buffer.Append(@"class");
+			buffer.Append(@"enum");
 			buffer.Append(@" ");
 			buffer.Append(className);
-			if (!string.IsNullOrWhiteSpace(baseClass))
-			{
-				buffer.Append(@" ");
-				buffer.Append(@":");
-				buffer.Append(@" ");
-				buffer.Append(baseClass);
-			}
+			buffer.Append(@"Property");
 			buffer.AppendLine();
 			buffer.AppendLine(@"{");
 
-			// Properties
-			AppendProperties(buffer, properties);
-
-			buffer.AppendLine();
-
-			// Constructor
-			var currentContructor = constructor ?? AppendConstructor;
-
-			currentContructor(buffer, properties, className);
+			// Entries
+			foreach (var property in properties)
+			{
+				if (property.Column.IsPrimaryKey)
+				{
+					continue;
+				}
+				buffer.Append(property.Name);
+				buffer.Append(@",");
+				buffer.AppendLine();
+			}
 
 			buffer.AppendLine(@"}");
 		}
@@ -240,6 +242,39 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 			}
 
 			return properties;
+		}
+
+		private static void GenerateClass(StringBuilder buffer, string className, List<Property> properties, string baseClass = "", Action<StringBuilder, List<Property>, string> constructor = null)
+		{
+			// Definition
+			buffer.Append(@"public");
+			buffer.Append(@" ");
+			buffer.Append(@"sealed");
+			buffer.Append(@" ");
+			buffer.Append(@"class");
+			buffer.Append(@" ");
+			buffer.Append(className);
+			if (!string.IsNullOrWhiteSpace(baseClass))
+			{
+				buffer.Append(@" ");
+				buffer.Append(@":");
+				buffer.Append(@" ");
+				buffer.Append(baseClass);
+			}
+			buffer.AppendLine();
+			buffer.AppendLine(@"{");
+
+			// Properties
+			AppendProperties(buffer, properties);
+
+			buffer.AppendLine();
+
+			// Constructor
+			var currentContructor = constructor ?? AppendConstructor;
+
+			currentContructor(buffer, properties, className);
+
+			buffer.AppendLine(@"}");
 		}
 
 		private static void AppendProperties(StringBuilder buffer, IEnumerable<Property> properties)
@@ -398,7 +433,7 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 							break;
 					}
 				}
-				
+
 				buffer.Append(@";");
 				buffer.AppendLine();
 			}

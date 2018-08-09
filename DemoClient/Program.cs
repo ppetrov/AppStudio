@@ -98,11 +98,13 @@ namespace DemoClient
 
 
 					buffer.Clear();
-					CodeGenerator.GenerateClass(buffer, table, projectConfig);
+					//CodeGenerator.GenerateClass(buffer, table, projectConfig);
+					//buffer.AppendLine();
+					//CodeGenerator.GenerateCaptionsClass(buffer, table, projectConfig);
+					//buffer.AppendLine();
+					//CodeGenerator.GenerateViewModel(buffer, table, projectConfig);
 					buffer.AppendLine();
-					CodeGenerator.GenerateCaptionsClass(buffer, table, projectConfig);
-					buffer.AppendLine();
-					CodeGenerator.GenerateViewModel(buffer, table, projectConfig);
+					CodeGenerator.GeneratePropertyEnum(buffer, table, projectConfig);
 					//Console.WriteLine(buffer.ToString());
 					//Console.WriteLine();
 
@@ -173,7 +175,7 @@ namespace DemoClient
 
 
 			Console.WriteLine(code);
-			
+			return;
 
 			File.WriteAllText(@"C:\Atos\AppStudio\AppStudio\Objects.cs", string.Format(@"using System;
 using AppCore.ViewModels;
