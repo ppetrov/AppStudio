@@ -2,12 +2,12 @@ using System;
 
 namespace AppStudio.EquipmentModule
 {
-	// TODO : Generate this
-	public sealed class EquipmentsPageParameters
+	// TODO : Generate this ???
+	public sealed class EquipmentsParameters
 	{
 		public DateTime DateTime { get; }
 
-		public EquipmentsPageParameters(DateTime dateTime)
+		public EquipmentsParameters(DateTime dateTime)
 		{
 			this.DateTime = dateTime;
 		}

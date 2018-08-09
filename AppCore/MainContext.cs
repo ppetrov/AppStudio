@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using AppCore.Data;
 using AppCore.Features;
 using AppCore.Logs;
 using AppCore.Sort;
@@ -9,6 +11,7 @@ namespace AppCore
 	{
 		private ServiceLocator ServiceLocator { get; } = new ServiceLocator();
 		private FeatureManager FeatureManager { get; } = new FeatureManager();
+		public DataCache DataCache { get; } = new DataCache();
 
 		public T GetService<T>() where T : class
 		{
@@ -27,6 +30,13 @@ namespace AppCore
 			if (serviceCreator == null) throw new ArgumentNullException(nameof(serviceCreator));
 
 			this.ServiceLocator.RegisterCreator(serviceCreator);
+		}
+
+		public Dictionary<long, T> GetDataFromCache<T>(IDbContext dbContext)
+		{
+			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
+
+			return this.DataCache.GetData<T>(dbContext);
 		}
 
 		public void Save(Feature feature)

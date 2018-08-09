@@ -4,6 +4,7 @@ using AppStudio.EquipmentModule.Models;
 
 namespace AppStudio.EquipmentModule.ViewModels
 {
+	// Complete
 	public sealed class EquipmentViewModel : ViewModel
 	{
 		public Equipment Equipment { get; }

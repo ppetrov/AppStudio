@@ -111,7 +111,7 @@ namespace DemoClient
 					classes.AppendLine(buffer.ToString());
 
 					buffer.Clear();
-					CodeGenerator.GenerateGetAllAsList(buffer, table, projectConfig);
+					CodeGenerator.GenerateGetAll(buffer, table, projectConfig);
 					//Console.WriteLine(buffer.ToString());
 					//Console.WriteLine();
 
@@ -174,7 +174,8 @@ namespace DemoClient
 			}
 
 
-			Console.WriteLine(code);
+			//Console.WriteLine(code);
+			Console.WriteLine(data);
 			return;
 
 			File.WriteAllText(@"C:\Atos\AppStudio\AppStudio\Objects.cs", string.Format(@"using System;

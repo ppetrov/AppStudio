@@ -24,8 +24,7 @@ namespace AppCore
 
 			var key = typeof(T).FullName;
 
-			object values;
-			if (!this.Data.TryGetValue(key, out values))
+			if (!this.Data.TryGetValue(key, out object values))
 			{
 				Debug.WriteLine(@"Get data from the database for type:" + key);
 				var dataProvider = this.DataProviders[key] as Func<IDbContext, DataCache, Dictionary<long, T>>;

@@ -2,6 +2,7 @@
 
 namespace AppStudio.EquipmentModule.Models
 {
+	// Complete
 	public sealed class Equipment
 	{
 		public long Id { get; }

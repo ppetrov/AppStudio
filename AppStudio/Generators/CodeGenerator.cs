@@ -150,14 +150,42 @@ namespace AppStudio.Generators
 			buffer.AppendLine(@"}");
 		}
 
-		public static void GenerateGetAllAsList(StringBuilder buffer, Table table, ProjectConfig config)
+		public static void GenerateGetAll(StringBuilder buffer, Table table, ProjectConfig config)
 		{
 			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 			if (table == null) throw new ArgumentNullException(nameof(table));
 			if (config == null) throw new ArgumentNullException(nameof(config));
 
-			const string template = @"
-public static List<{0}> Get{1}(IDbContext dbContext, DataCache cache)
+			var entityConfig = config.GetEntityConfig(table.Name);
+			var className = entityConfig.ClassName;
+			var properties = GetProperties(table, config, entityConfig);
+
+			var dictionaries = GetDictionariesVariables(properties);
+			if (dictionaries == string.Empty)
+			{
+				const string template = @"
+public static IEnumerable<{0}> Get{1}(IDbContext dbContext)
+{{
+	if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
+
+	var query = new Query<{0}>(@""{2}"", r =>
+	{{
+	{3}
+	}});
+
+	return dbContext.Execute(query);
+}}";
+
+				buffer.AppendFormat(template,
+					className,
+					entityConfig.ClassPluralName,
+					SqlGenerator.Select(table, entityConfig),
+					GetCreator(className, properties));
+			}
+			else
+			{
+				const string template = @"
+public static IEnumerable<{0}> Get{1}(IDbContext dbContext, DataCache cache)
 {{
 	if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
 	if (cache == null) throw new ArgumentNullException(nameof(cache));
@@ -176,16 +204,13 @@ public static List<{0}> Get{1}(IDbContext dbContext, DataCache cache)
 	return items;
 }}";
 
-			var entityConfig = config.GetEntityConfig(table.Name);
-			var className = entityConfig.ClassName;
-			var properties = GetProperties(table, config, entityConfig);
-
-			buffer.AppendFormat(template,
-				className,
-				entityConfig.ClassPluralName,
-				SqlGenerator.Select(table, entityConfig),
-				GetCreator(className, properties),
-				GetDictionariesVariables(properties));
+				buffer.AppendFormat(template,
+					className,
+					entityConfig.ClassPluralName,
+					SqlGenerator.Select(table, entityConfig),
+					GetCreator(className, properties),
+					dictionaries);
+			}
 		}
 
 		public static void GenerateGetAllAsDictionary(StringBuilder buffer, Table table, ProjectConfig config)

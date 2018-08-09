@@ -68,17 +68,19 @@ namespace AppStudio.EquipmentModule.ViewModels
 			this.Captions = new EquipmentCaptions(serialNumberCaption, powerCaption, lastCheckedCaption);
 
 			this.SearchHint = localization.GetValue(string.Empty);
-			this.ClearSearchCommand = new ActionCommand(this.ClearSearch);
+			//this.ClearSearchCommand = new ActionCommand(this.ClearSearch);
 
 			// TODO : Generate this method
 			this.SerialNumberOption = new SortOption(serialNumberCaption, EquipmentProperty.SerialNumber);
 
-			this.SelectSortOptionCommand = new ActionCommand(this.SelectSortOption);
+			//this.SelectSortOptionCommand = new ActionCommand(this.SelectSortOption);
 		}
 
-		public void LoadData(IEnumerable<EquipmentViewModel> viewModels)
+		public override void LoadData(object parameter)
 		{
-			if (viewModels == null) throw new ArgumentNullException(nameof(viewModels));
+			if (parameter == null) throw new ArgumentNullException(nameof(parameter));
+
+			var viewModels = parameter as IEnumerable<EquipmentViewModel>;
 
 			this.Equipments.Clear();
 			this.Equipments.AddRange(viewModels);

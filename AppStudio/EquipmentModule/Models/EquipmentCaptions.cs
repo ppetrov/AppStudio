@@ -2,6 +2,7 @@
 
 namespace AppStudio.EquipmentModule.Models
 {
+	// Complete
 	public sealed class EquipmentCaptions
 	{
 		public string SerialNumber { get; }

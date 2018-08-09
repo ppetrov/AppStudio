@@ -6,5 +6,4 @@
 		Power,
 		LastChecked,
 	}
-
 }
