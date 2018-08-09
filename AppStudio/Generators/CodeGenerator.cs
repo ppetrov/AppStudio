@@ -7,6 +7,7 @@ using AppStudio.Db;
 
 namespace AppStudio.Generators
 {
+
 	public static class CodeGenerator
 	{
 		private sealed class Property
@@ -17,6 +18,16 @@ namespace AppStudio.Generators
 			public readonly bool IsReferenceType;
 			public readonly string Name;
 			public readonly string VariableName;
+
+			public Property(Column column, KeyValuePair<string, bool> type, string name, EntityConfig referenceEntityConfig)
+			{
+				this.Column = column;
+				this.ReferenceEntityConfig = referenceEntityConfig;
+				this.Type = type.Key;
+				this.IsReferenceType = type.Value;
+				this.Name = name;
+				this.VariableName = NameProvider.GetVariableName(name);
+			}
 
 			private Property(Column column, string type, bool isReferenceType, string name, EntityConfig referenceEntityConfig)
 			{
@@ -58,7 +69,28 @@ namespace AppStudio.Generators
 
 			var entityConfig = config.GetEntityConfig(table.Name);
 			var className = entityConfig.ClassName;
+			var properties = GetProperties(table, config, entityConfig);
 
+			GenerateClass(buffer, className, properties);
+		}
+
+		public static void GenerateCaptionsClass(StringBuilder buffer, Table table, ProjectConfig config)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (table == null) throw new ArgumentNullException(nameof(table));
+			if (config == null) throw new ArgumentNullException(nameof(config));
+
+			var entityConfig = config.GetEntityConfig(table.Name);
+			var className = entityConfig.ClassName + @"Captions";
+			var properties = GetProperties(table, config, entityConfig)
+				.Where(v => !v.Column.IsPrimaryKey)
+				.Select(v => new Property(v.Column, MapType(SqlDataType.String), v.Name, v.ReferenceEntityConfig)).ToList();
+
+			GenerateClass(buffer, className, properties);
+		}
+
+		private static void GenerateClass(StringBuilder buffer, string className, List<Property> properties)
+		{
 			// Definition
 			buffer.Append(@"public");
 			buffer.Append(@" ");
@@ -69,7 +101,6 @@ namespace AppStudio.Generators
 			buffer.AppendLine(className);
 			buffer.AppendLine(@"{");
 
-			var properties = GetProperties(table, config, entityConfig);
 			// Properties
 			AppendProperties(buffer, properties);
 

@@ -32,8 +32,21 @@ namespace AppStudio.EquipmentModule.ViewModels
 
 		public ICommand ClearSearchCommand { get; }
 
-		public SortOption[] SortOptions { get; }
+		public SortOption SerialNumberOption { get; }
+
 		public ICommand SelectSortOptionCommand { get; }
+
+		// TODO : !!! Generate this method
+		private SortOption[] SortOptions
+		{
+			get
+			{
+				return new[]
+				{
+					this.SerialNumberOption
+				};
+			}
+		}
 
 		private List<EquipmentViewModel> _currentEquipments = new List<EquipmentViewModel>(0);
 		public List<EquipmentViewModel> CurrentEquipments
@@ -56,10 +69,8 @@ namespace AppStudio.EquipmentModule.ViewModels
 			this.ClearSearchCommand = new ActionCommand(this.ClearSearch);
 
 			// TODO : Generate this method
-			this.SortOptions = new[]
-			{
-				new SortOption(serialNumberCaption, EquipmentProperty.SerialNumber),
-			};
+			this.SerialNumberOption = new SortOption(serialNumberCaption, EquipmentProperty.SerialNumber);
+
 			this.SelectSortOptionCommand = new ActionCommand(this.SelectSortOption);
 		}
 
