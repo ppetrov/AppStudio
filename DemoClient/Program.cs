@@ -101,6 +101,8 @@ namespace DemoClient
 					CodeGenerator.GenerateClass(buffer, table, projectConfig);
 					buffer.AppendLine();
 					CodeGenerator.GenerateCaptionsClass(buffer, table, projectConfig);
+					buffer.AppendLine();
+					CodeGenerator.GenerateViewModel(buffer, table, projectConfig);
 					//Console.WriteLine(buffer.ToString());
 					//Console.WriteLine();
 
@@ -161,8 +163,8 @@ namespace DemoClient
 
 			var code = classes.ToString();
 			var data = dataprovider.ToString();
-			Console.WriteLine(code.Length);
-			Console.WriteLine(data.Length);
+			//Console.WriteLine(code.Length);
+			//Console.WriteLine(data.Length);
 
 			foreach (var s in register.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries))
 			{
@@ -171,9 +173,10 @@ namespace DemoClient
 
 
 			Console.WriteLine(code);
-			return;
+			
 
 			File.WriteAllText(@"C:\Atos\AppStudio\AppStudio\Objects.cs", string.Format(@"using System;
+using AppCore.ViewModels;
 
 namespace AppStudio
 {{

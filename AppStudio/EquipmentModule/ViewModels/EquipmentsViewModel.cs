@@ -62,8 +62,10 @@ namespace AppStudio.EquipmentModule.ViewModels
 			var localization = this.MainContext.GetService<ILocalization>();
 
 			// TODO : Generate this method
-			var serialNumberCaption = localization.GetValue(string.Empty);
-			this.Captions = new EquipmentCaptions(serialNumberCaption);
+			var serialNumberCaption = localization.GetValue(nameof(EquipmentProperty.SerialNumber));
+			var powerCaption = localization.GetValue(string.Empty);
+			var lastCheckedCaption = localization.GetValue(string.Empty);
+			this.Captions = new EquipmentCaptions(serialNumberCaption, powerCaption, lastCheckedCaption);
 
 			this.SearchHint = localization.GetValue(string.Empty);
 			this.ClearSearchCommand = new ActionCommand(this.ClearSearch);

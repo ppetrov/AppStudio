@@ -7,7 +7,6 @@ using AppStudio.Db;
 
 namespace AppStudio.Generators
 {
-
 	public static class CodeGenerator
 	{
 		private sealed class Property
@@ -18,8 +17,9 @@ namespace AppStudio.Generators
 			public readonly bool IsReferenceType;
 			public readonly string Name;
 			public readonly string VariableName;
+			public readonly bool IsCaption;
 
-			public Property(Column column, KeyValuePair<string, bool> type, string name, EntityConfig referenceEntityConfig)
+			public Property(Column column, KeyValuePair<string, bool> type, string name, EntityConfig referenceEntityConfig, bool isCaption = false)
 			{
 				this.Column = column;
 				this.ReferenceEntityConfig = referenceEntityConfig;
@@ -27,6 +27,7 @@ namespace AppStudio.Generators
 				this.IsReferenceType = type.Value;
 				this.Name = name;
 				this.VariableName = NameProvider.GetVariableName(name);
+				this.IsCaption = isCaption;
 			}
 
 			private Property(Column column, string type, bool isReferenceType, string name, EntityConfig referenceEntityConfig)
@@ -84,12 +85,37 @@ namespace AppStudio.Generators
 			var className = entityConfig.ClassName + @"Captions";
 			var properties = GetProperties(table, config, entityConfig)
 				.Where(v => !v.Column.IsPrimaryKey)
-				.Select(v => new Property(v.Column, MapType(SqlDataType.String), v.Name, v.ReferenceEntityConfig)).ToList();
+				.Select(v => new Property(v.Column, MapType(SqlDataType.String), v.Name, v.ReferenceEntityConfig))
+				.ToList();
 
 			GenerateClass(buffer, className, properties);
 		}
 
-		private static void GenerateClass(StringBuilder buffer, string className, List<Property> properties)
+		public static void GenerateViewModel(StringBuilder buffer, Table table, ProjectConfig config)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (table == null) throw new ArgumentNullException(nameof(table));
+			if (config == null) throw new ArgumentNullException(nameof(config));
+
+			var entityConfig = config.GetEntityConfig(table.Name);
+			var modelClassName = entityConfig.ClassName;
+			var captionsClassName = modelClassName + @"Captions";
+			var className = modelClassName + @"ViewModel";
+			var properties = GetProperties(table, config, entityConfig)
+				.Where(v => !v.Column.IsPrimaryKey)
+				.SelectMany(v => new[]
+				{
+					new Property(v.Column, MapType(SqlDataType.String), v.Name, v.ReferenceEntityConfig),
+					new Property(v.Column, MapType(SqlDataType.String), v.Name, v.ReferenceEntityConfig, true),
+				}).ToList();
+
+			properties.Insert(0, new Property(null, new KeyValuePair<string, bool>(modelClassName, true), modelClassName, null));
+			properties.Insert(1, new Property(null, new KeyValuePair<string, bool>(captionsClassName, true), @"Captions", null));
+
+			GenerateClass(buffer, className, properties, @"ViewModel", AppendViewModelConstructor);
+		}
+
+		private static void GenerateClass(StringBuilder buffer, string className, List<Property> properties, string baseClass = "", Action<StringBuilder, List<Property>, string> constructor = null)
 		{
 			// Definition
 			buffer.Append(@"public");
@@ -98,7 +124,15 @@ namespace AppStudio.Generators
 			buffer.Append(@" ");
 			buffer.Append(@"class");
 			buffer.Append(@" ");
-			buffer.AppendLine(className);
+			buffer.Append(className);
+			if (!string.IsNullOrWhiteSpace(baseClass))
+			{
+				buffer.Append(@" ");
+				buffer.Append(@":");
+				buffer.Append(@" ");
+				buffer.Append(baseClass);
+			}
+			buffer.AppendLine();
 			buffer.AppendLine(@"{");
 
 			// Properties
@@ -107,7 +141,9 @@ namespace AppStudio.Generators
 			buffer.AppendLine();
 
 			// Constructor
-			AppendConstructor(buffer, properties, className);
+			var currentContructor = constructor ?? AppendConstructor;
+
+			currentContructor(buffer, properties, className);
 
 			buffer.AppendLine(@"}");
 		}
@@ -215,6 +251,10 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 				buffer.Append(property.Type);
 				buffer.Append(@" ");
 				buffer.Append(property.Name);
+				if (property.IsCaption)
+				{
+					buffer.Append(@"Caption");
+				}
 				buffer.Append(@" ");
 				buffer.Append(@"{ get; }");
 				buffer.AppendLine();
@@ -239,6 +279,31 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 
 			// Assign Parameters
 			AppendAssignParameters(buffer, properties);
+
+			buffer.AppendLine(@"}");
+		}
+
+		private static void AppendViewModelConstructor(StringBuilder buffer, List<Property> properties, string className)
+		{
+			var dataProperties = properties.Take(2).ToList();
+
+			buffer.Append(@"public");
+			buffer.Append(@" ");
+			buffer.Append(className);
+			buffer.Append(@"(");
+			// Parameters			
+			AppendConstructorParameters(buffer, dataProperties);
+			buffer.Append(@")");
+			buffer.AppendLine();
+
+			buffer.AppendLine(@"{");
+
+			// Parameters guards
+			AppendParametersGuards(buffer, dataProperties);
+
+			// Assign Parameters
+			AppendAssignParameters(buffer, dataProperties);
+			AppendAssignViewModelParameters(buffer, properties.Skip(2));
 
 			buffer.AppendLine(@"}");
 		}
@@ -294,6 +359,46 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 				buffer.Append(property.Name);
 				buffer.Append(@" = ");
 				buffer.Append(property.VariableName);
+				buffer.Append(@";");
+				buffer.AppendLine();
+			}
+		}
+
+		private static void AppendAssignViewModelParameters(StringBuilder buffer, IEnumerable<Property> properties)
+		{
+			foreach (var property in properties)
+			{
+				buffer.Append(@"this");
+				buffer.Append(@".");
+				buffer.Append(property.Name);
+				if (property.IsCaption)
+				{
+					buffer.Append(@"Caption");
+				}
+				buffer.Append(@" = ");
+				buffer.Append(property.IsCaption ? @"captions" : @"equipment");
+				buffer.Append(@".");
+				buffer.Append(property.Name);
+				if (!property.IsCaption)
+				{
+					switch (property.Column.Type)
+					{
+						case SqlDataType.Int:
+						case SqlDataType.Long:
+							buffer.Append(@".");
+							buffer.Append(@"ToString()");
+							break;
+						case SqlDataType.Decimal:
+							buffer.Append(@".");
+							buffer.Append(@"ToString(@""F2"")");
+							break;
+						case SqlDataType.DateTime:
+							buffer.Append(@".");
+							buffer.Append(@"ToString(@""dd MMM yyyy"")");
+							break;
+					}
+				}
+				
 				buffer.Append(@";");
 				buffer.AppendLine();
 			}

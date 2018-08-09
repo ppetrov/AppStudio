@@ -4,13 +4,16 @@ using AppStudio.EquipmentModule.Models;
 
 namespace AppStudio.EquipmentModule.ViewModels
 {
-	// TODO : Generate this
 	public sealed class EquipmentViewModel : ViewModel
 	{
 		public Equipment Equipment { get; }
-
-		public string SerialNumberCaption { get; }
+		public EquipmentCaptions Captions { get; }
 		public string SerialNumber { get; }
+		public string SerialNumberCaption { get; }
+		public string Power { get; }
+		public string PowerCaption { get; }
+		public string LastChecked { get; }
+		public string LastCheckedCaption { get; }
 
 		public EquipmentViewModel(Equipment equipment, EquipmentCaptions captions)
 		{
@@ -18,9 +21,13 @@ namespace AppStudio.EquipmentModule.ViewModels
 			if (captions == null) throw new ArgumentNullException(nameof(captions));
 
 			this.Equipment = equipment;
-
+			this.Captions = captions;
 			this.SerialNumber = equipment.SerialNumber;
 			this.SerialNumberCaption = captions.SerialNumber;
+			this.Power = equipment.Power.ToString(@"F2");
+			this.PowerCaption = captions.Power;
+			this.LastChecked = equipment.LastChecked.ToString(@"dd MMM yyyy");
+			this.LastCheckedCaption = captions.LastChecked;
 		}
 	}
 }

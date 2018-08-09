@@ -82,7 +82,8 @@ namespace AppStudio.Db
 			{
 				return SqlDataType.Int;
 			}
-			if (value.Equals(@"DATETIME", StringComparison.OrdinalIgnoreCase))
+			if (value.Equals(@"DATETIME", StringComparison.OrdinalIgnoreCase) ||
+			    value.Equals(@"DATE", StringComparison.OrdinalIgnoreCase))
 			{
 				return SqlDataType.DateTime;
 			}
