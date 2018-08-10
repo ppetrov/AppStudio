@@ -8,6 +8,7 @@ using System.Text;
 using AppCore;
 using AppStudio;
 using AppStudio.Config;
+using AppStudio.Data;
 using AppStudio.Db;
 using AppStudio.Generators;
 
@@ -15,8 +16,37 @@ namespace DemoClient
 {
 	class Program
 	{
+		public static IEnumerable<string> EquipmentPower(int count)
+		{
+			for (var i = 0; i < count; i++)
+			{
+				yield return DataGenerator.Numbers(1, 1000, 3500).Single();
+			}
+		}
+
 		static void Main(string[] args)
 		{
+			foreach (var val in DataGenerator.Generate(23, new Func<int, IEnumerable<string>>[]
+			{
+				DataGenerator.CustomerNames,
+				DataGenerator.CustomerNumbers,
+				DataGenerator.Addresses,
+				DataGenerator.Cities,
+				DataGenerator.PersonNames,
+				DataGenerator.Barcodes,
+				EquipmentPower
+			}))
+			{
+				foreach (var v in val)
+				{
+					Console.WriteLine(v);
+				}
+				Console.WriteLine();
+
+				//Console.WriteLine(val);
+			}
+			return;
+
 			var path = @"C:\Users\PetarPetrov\AppData\Local\Packages\9ed4bf97-9c34-45dc-a217-5f8121aa6dfc_7gbmn9e1bm2jj\LocalState\ifsa.sqlite";
 
 			path = @"C:\Users\PetarPetrov\Desktop\app_studio.sqlite";
