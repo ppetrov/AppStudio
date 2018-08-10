@@ -16,33 +16,31 @@ namespace DemoClient
 {
 	class Program
 	{
+		private static readonly Random _rnd = new Random();
+
 		public static string EquipmentPower()
 		{
-			return DataGenerator.Numbers(1000, 3500);
+			var powers = new[]
+			{
+				@"500",
+				@"600",
+				@"800",
+				@"900",
+				@"1000",
+				@"1100",
+				@"1200",
+				@"1400",
+				@"1600",
+				@"2000",
+				@"2500",
+			};
+			return powers[_rnd.Next(powers.Length)];
 		}
 
 		static void Main(string[] args)
 		{
-			foreach (var val in DataGenerator.Generate(23, new Func<string>[]
-			{
-				DataGenerator.CustomerNames,
-				DataGenerator.CustomerNumbers,
-				DataGenerator.Addresses,
-				DataGenerator.Cities,
-				DataGenerator.PersonNames,
-				DataGenerator.Barcodes,
-				EquipmentPower
-			}))
-			{
-				foreach (var v in val)
-				{
-					Console.WriteLine(v);
-				}
-				Console.WriteLine();
-
-				//Console.WriteLine(val);
-			}
-			return;
+			//Generate();
+			//return;
 
 			var path = @"C:\Users\PetarPetrov\AppData\Local\Packages\9ed4bf97-9c34-45dc-a217-5f8121aa6dfc_7gbmn9e1bm2jj\LocalState\ifsa.sqlite";
 
@@ -53,8 +51,6 @@ namespace DemoClient
 			// TODO : !!!
 			//projectConfig.Load(null); // load to a file
 			//projectConfig.Save(null); // save to a file
-
-
 
 			var cnString = $@"Data Source = {path}; Version = 3; DateTimeFormat=Ticks;";
 
@@ -122,14 +118,12 @@ namespace DemoClient
 					//Console.WriteLine(buffer.ToString());
 					//Console.WriteLine();
 
-
-
 					buffer.Clear();
-					//CodeGenerator.GenerateClass(buffer, table, projectConfig);
-					//buffer.AppendLine();
-					//CodeGenerator.GenerateCaptionsClass(buffer, table, projectConfig);
-					//buffer.AppendLine();
-					//CodeGenerator.GenerateViewModel(buffer, table, projectConfig);
+					CodeGenerator.GenerateClass(buffer, table, projectConfig);
+					buffer.AppendLine();
+					CodeGenerator.GenerateCaptionsClass(buffer, table, projectConfig);
+					buffer.AppendLine();
+					CodeGenerator.GenerateViewModel(buffer, table, projectConfig);
 					buffer.AppendLine();
 					CodeGenerator.GeneratePropertyEnum(buffer, table, projectConfig);
 					//Console.WriteLine(buffer.ToString());
@@ -201,8 +195,8 @@ namespace DemoClient
 			}
 
 
-			//Console.WriteLine(code);
-			Console.WriteLine(data);
+			Console.WriteLine(code);
+			//Console.WriteLine(data);
 			return;
 
 			File.WriteAllText(@"C:\Atos\AppStudio\AppStudio\Objects.cs", string.Format(@"using System;
@@ -230,6 +224,27 @@ namespace AppStudio
 
 		}
 
+		private static void Generate()
+		{
+			foreach (var val in DataGenerator.Generate(23, new Func<string>[]
+			{
+				DataGenerator.CustomerName,
+				DataGenerator.CustomerNumber,
+				DataGenerator.Address,
+				DataGenerator.City,
+				DataGenerator.PersonName,
+				DataGenerator.Barcode,
+				EquipmentPower
+			}))
+			{
+				foreach (var v in val)
+				{
+					Console.WriteLine(v);
+				}
+				Console.WriteLine();
 
+				//Console.WriteLine(val);
+			}
+		}
 	}
 }

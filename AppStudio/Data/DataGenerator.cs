@@ -50,7 +50,7 @@ namespace AppStudio.Data
 			@"Moore",
 		};
 
-		private static readonly string[] PredefinedCities =
+		private static readonly string[] Cities =
 		{
 			@"London",
 			@"Edinburgh",
@@ -93,7 +93,7 @@ namespace AppStudio.Data
 
 		private static readonly string[] Digits = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
-		private static readonly string[] PredefinedCustomerNames = {
+		private static readonly string[] Names = {
 			@"Pizza", @"Cafe", @"Restaurant", @"Kiosk", @"Stand", @"Shop", @"Champion",
 			@"Magazine", @"Market", @"Land", @"Universe", @"Infinity", @"Smart", @"Gift", @"Winter",
 			@"Unlimited", @"Luxury", @"No Limit", @"Priceless", @"Million", @"Winner", @"Summer"
@@ -116,7 +116,7 @@ namespace AppStudio.Data
 			}
 		}
 
-		public static string PersonNames()
+		public static string PersonName()
 		{
 			var first = FirstNames[Rnd.Next(FirstNames.Length)];
 			var last = LastNames[Rnd.Next(LastNames.Length)];
@@ -124,12 +124,12 @@ namespace AppStudio.Data
 			return first + @" " + last;
 		}
 
-		public static string Cities()
+		public static string City()
 		{
-			return PredefinedCities[Rnd.Next(PredefinedCities.Length)];
+			return Cities[Rnd.Next(Cities.Length)];
 		}
 
-		public static string Phones()
+		public static string Phone()
 		{
 			var buffer = new StringBuilder(12);
 
@@ -143,7 +143,7 @@ namespace AppStudio.Data
 			return buffer.ToString();
 		}
 
-		public static string Barcodes()
+		public static string Barcode()
 		{
 			var length = 13;
 
@@ -157,12 +157,12 @@ namespace AppStudio.Data
 			return buffer.ToString();
 		}
 
-		public static string Numbers(int min, int max)
+		public static string Number(int min, int max)
 		{
 			return Rnd.Next(min, max + 1).ToString();
 		}
 
-		public static string Addresses()
+		public static string Address()
 		{
 			var number = Rnd.Next(1, 168);
 			var street = Steets[Rnd.Next(Steets.Length)];
@@ -170,29 +170,7 @@ namespace AppStudio.Data
 			return number + @" " + street;
 		}
 
-		public static string CustomerNames()
-		{
-			return GenerateCustomerNames(PredefinedCustomerNames[Rnd.Next(PredefinedCustomerNames.Length)]);
-		}
-
-		public static string CustomerNumbers()
-		{
-			var length = 10;
-
-			var buffer = new StringBuilder(length);
-
-			// First number can't be zero
-			buffer.Append(Digits[Rnd.Next(1, Digits.Length)]);
-
-			for (var i = 1; i < length - 1; i++)
-			{
-				buffer.Append(Digits[Rnd.Next(Digits.Length)]);
-			}
-
-			return buffer.ToString();
-		}
-
-		private static string GenerateCustomerNames(string name)
+		public static string CustomerName()
 		{
 			var templates = new[]
 			{
@@ -212,7 +190,7 @@ namespace AppStudio.Data
 				@"Supreme {0}",
 			};
 
-			var brand = string.Format(templates[Rnd.Next(templates.Length)], name);
+			var brand = string.Format(templates[Rnd.Next(templates.Length)], Names[Rnd.Next(Names.Length)]);
 
 			if (Rnd.Next(8) == 0)
 			{
@@ -220,6 +198,23 @@ namespace AppStudio.Data
 			}
 
 			return brand;
+		}
+
+		public static string CustomerNumber()
+		{
+			var length = 10;
+
+			var buffer = new StringBuilder(length);
+
+			// First number can't be zero
+			buffer.Append(Digits[Rnd.Next(1, Digits.Length)]);
+
+			for (var i = 1; i < length - 1; i++)
+			{
+				buffer.Append(Digits[Rnd.Next(Digits.Length)]);
+			}
+
+			return buffer.ToString();
 		}
 	}
 }
