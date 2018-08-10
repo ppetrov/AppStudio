@@ -16,17 +16,14 @@ namespace DemoClient
 {
 	class Program
 	{
-		public static IEnumerable<string> EquipmentPower(int count)
+		public static string EquipmentPower()
 		{
-			for (var i = 0; i < count; i++)
-			{
-				yield return DataGenerator.Numbers(1, 1000, 3500).Single();
-			}
+			return DataGenerator.Numbers(1000, 3500);
 		}
 
 		static void Main(string[] args)
 		{
-			foreach (var val in DataGenerator.Generate(23, new Func<int, IEnumerable<string>>[]
+			foreach (var val in DataGenerator.Generate(23, new Func<string>[]
 			{
 				DataGenerator.CustomerNames,
 				DataGenerator.CustomerNumbers,

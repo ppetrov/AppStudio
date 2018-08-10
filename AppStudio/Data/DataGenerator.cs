@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace AppStudio.Data
@@ -94,14 +93,13 @@ namespace AppStudio.Data
 
 		private static readonly string[] Digits = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
-		private static readonly string[] PredefinedCustomerNames = new[]
-		{
+		private static readonly string[] PredefinedCustomerNames = {
 			@"Pizza", @"Cafe", @"Restaurant", @"Kiosk", @"Stand", @"Shop", @"Champion",
 			@"Magazine", @"Market", @"Land", @"Universe", @"Infinity", @"Smart", @"Gift", @"Winter",
 			@"Unlimited", @"Luxury", @"No Limit", @"Priceless", @"Million", @"Winner", @"Summer"
 		};
 
-		public static IEnumerable<string[]> Generate(int count, Func<int, IEnumerable<string>>[] generators)
+		public static IEnumerable<string[]> Generate(int count, Func<string>[] generators)
 		{
 			if (generators == null) throw new ArgumentNullException(nameof(generators));
 
@@ -111,105 +109,87 @@ namespace AppStudio.Data
 
 				for (var index = 0; index < generators.Length; index++)
 				{
-					values[index] = generators[index](1).Single();
+					values[index] = generators[index]();
 				}
 
 				yield return values;
 			}
 		}
 
-		public static IEnumerable<string> PersonNames(int count = 1)
+		public static string PersonNames()
 		{
-			for (var i = 0; i < count; i++)
+			var first = FirstNames[Rnd.Next(FirstNames.Length)];
+			var last = LastNames[Rnd.Next(LastNames.Length)];
+
+			return first + @" " + last;
+		}
+
+		public static string Cities()
+		{
+			return PredefinedCities[Rnd.Next(PredefinedCities.Length)];
+		}
+
+		public static string Phones()
+		{
+			var buffer = new StringBuilder(12);
+
+			for (var j = 0; j < buffer.Capacity; j++)
 			{
-				var first = FirstNames[Rnd.Next(FirstNames.Length)];
-				var last = LastNames[Rnd.Next(LastNames.Length)];
-
-				yield return first + @" " + last;
+				buffer.Append(Digits[Rnd.Next(Digits.Length)]);
 			}
+
+			buffer[3] = buffer[7] = '-';
+
+			return buffer.ToString();
 		}
 
-		public static IEnumerable<string> Cities(int count = 1)
+		public static string Barcodes()
 		{
-			for (var i = 0; i < count; i++)
+			var length = 13;
+
+			var buffer = new StringBuilder(length);
+
+			for (var j = 0; j < length - 1; j++)
 			{
-				var city = PredefinedCities[Rnd.Next(PredefinedCities.Length)];
-
-				yield return city;
+				buffer.Append(Digits[Rnd.Next(Digits.Length)]);
 			}
+
+			return buffer.ToString();
 		}
 
-		public static IEnumerable<string> Phones(int count = 1)
+		public static string Numbers(int min, int max)
 		{
-			for (var i = 0; i < count; i++)
+			return Rnd.Next(min, max + 1).ToString();
+		}
+
+		public static string Addresses()
+		{
+			var number = Rnd.Next(1, 168);
+			var street = Steets[Rnd.Next(Steets.Length)];
+
+			return number + @" " + street;
+		}
+
+		public static string CustomerNames()
+		{
+			return GenerateCustomerNames(PredefinedCustomerNames[Rnd.Next(PredefinedCustomerNames.Length)]);
+		}
+
+		public static string CustomerNumbers()
+		{
+			var length = 10;
+
+			var buffer = new StringBuilder(length);
+
+			// First number can't be zero
+			buffer.Append(Digits[Rnd.Next(1, Digits.Length)]);
+
+			for (var i = 1; i < length - 1; i++)
 			{
-				var buffer = new StringBuilder(12);
-
-				for (var j = 0; j < buffer.Capacity; j++)
-				{
-					buffer.Append(Digits[Rnd.Next(Digits.Length)]);
-				}
-
-				buffer[3] = buffer[7] = '-';
-
-				yield return buffer.ToString();
+				buffer.Append(Digits[Rnd.Next(Digits.Length)]);
 			}
-		}
 
-		public static IEnumerable<string> Barcodes(int count = 1)
-		{
-			return Numbers(count, 13);
-		}
-
-		public static IEnumerable<string> Numbers(int count, int length = 10)
-		{
-			for (var i = 0; i < count; i++)
-			{
-				var buffer = new StringBuilder(length);
-
-				buffer.Append(Digits[Rnd.Next(1, Digits.Length)]);
-
-				for (var j = 0; j < length - 1; j++)
-				{
-					buffer.Append(Digits[Rnd.Next(Digits.Length)]);
-				}
-
-				yield return buffer.ToString();
-			}
-		}
-
-		public static IEnumerable<string> Numbers(int count, int min, int max)
-		{
-			for (var i = 0; i < count; i++)
-			{
-				yield return Rnd.Next(min, max + 1).ToString();
-			}
-		}
-
-		public static IEnumerable<string> Addresses(int count)
-		{
-			for (var i = 0; i < count; i++)
-			{
-				var number = Rnd.Next(1, 168);
-				var street = Steets[Rnd.Next(Steets.Length)];
-
-				yield return number + @" " + street;
-			}
-		}
-
-		public static IEnumerable<string> CustomerNames(int count = 1)
-		{
-			for (var i = 0; i < count; i++)
-			{
-				var name = PredefinedCustomerNames[Rnd.Next(PredefinedCustomerNames.Length)];
-
-				yield return GenerateCustomerNames(name);
-			}
-		}
-
-		public static IEnumerable<string> CustomerNumbers(int count = 1)
-		{
-			return Numbers(count);
+			return buffer.ToString();
 		}
 
 		private static string GenerateCustomerNames(string name)
