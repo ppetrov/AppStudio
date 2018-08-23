@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using AppCore;
+using AppCore.Data;
 using AppStudio;
 using AppStudio.Config;
 using AppStudio.Data;
@@ -16,26 +17,7 @@ namespace DemoClient
 {
 	class Program
 	{
-		private static readonly Random _rnd = new Random();
-
-		public static string EquipmentPower()
-		{
-			var powers = new[]
-			{
-				@"500",
-				@"600",
-				@"800",
-				@"900",
-				@"1000",
-				@"1100",
-				@"1200",
-				@"1400",
-				@"1600",
-				@"2000",
-				@"2500",
-			};
-			return powers[_rnd.Next(powers.Length)];
-		}
+		private static readonly Random Rnd = new Random();
 
 		static void Main(string[] args)
 		{
@@ -55,7 +37,7 @@ namespace DemoClient
 			var cnString = $@"Data Source = {path}; Version = 3; DateTimeFormat=Ticks;";
 
 			var classes = new StringBuilder();
-			var dataprovider = new StringBuilder();
+			var dataProvider = new StringBuilder();
 
 			var register = new StringBuilder();
 
@@ -67,14 +49,11 @@ namespace DemoClient
 				{
 					if (table.Name.Contains('$') ||
 						table.Name.IndexOf(@"Asset_Class", StringComparison.OrdinalIgnoreCase) >= 0 ||
-						table.Name.IndexOf(@"open_bala", StringComparison.OrdinalIgnoreCase) >= 0 ||
+						table.Name.IndexOf(@"open_balance", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						table.Name.IndexOf(@"factory_cal", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						table.Name.IndexOf(@"Visit_dat", StringComparison.OrdinalIgnoreCase) >= 0 ||
+						table.Name.IndexOf(@"Equipment", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						table.Name.IndexOf(@"Temp_data", StringComparison.OrdinalIgnoreCase) >= 0)
-					{
-						continue;
-					}
-					if (table.Name.IndexOf(@"Equipment", StringComparison.OrdinalIgnoreCase) < 0)
 					{
 						continue;
 					}
@@ -124,8 +103,8 @@ namespace DemoClient
 					CodeGenerator.GenerateCaptionsClass(buffer, table, projectConfig);
 					buffer.AppendLine();
 					CodeGenerator.GenerateViewModel(buffer, table, projectConfig);
-					buffer.AppendLine();
-					CodeGenerator.GeneratePropertyEnum(buffer, table, projectConfig);
+					//buffer.AppendLine();
+					//CodeGenerator.GeneratePropertyEnum(buffer, table, projectConfig);
 					//Console.WriteLine(buffer.ToString());
 					//Console.WriteLine();
 
@@ -136,12 +115,10 @@ namespace DemoClient
 					//Console.WriteLine(buffer.ToString());
 					//Console.WriteLine();
 
-					dataprovider.AppendLine(buffer.ToString());
-
+					dataProvider.AppendLine(buffer.ToString());
 
 					//register.AppendLine($@"Console.Write(""{table.Name}"" + "" : "");");
 					//register.AppendLine($@"Console.WriteLine(DataProviders.Get{projectConfig.GetEntityConfig(table.Name).ClassPluralName}(dbContext, cache).Count);");
-
 
 					register.AppendLine($@"s.Add(""{table.Name}"", DataProviders.Get{projectConfig.GetEntityConfig(table.Name).ClassPluralName}(dbContext, cache).Count);");
 
@@ -157,8 +134,6 @@ namespace DemoClient
 				//Console.WriteLine(arts.Count);
 
 				var s = new Dictionary<string, int>();
-
-				//s.Add("ACTIVATION_COMPLIANCES", DataProviders.GetActivationCompliances(dbContext, cache).Count);
 
 				var vals = s
 					.Where(v => v.Value != 0)
@@ -180,12 +155,11 @@ namespace DemoClient
 					Console.WriteLine(v);
 				}
 
-
 				dbContext.Complete();
 			}
 
 			var code = classes.ToString();
-			var data = dataprovider.ToString();
+			var data = dataProvider.ToString();
 			//Console.WriteLine(code.Length);
 			//Console.WriteLine(data.Length);
 
@@ -194,10 +168,9 @@ namespace DemoClient
 				Debug.WriteLine(s);
 			}
 
-
-			Console.WriteLine(code);
+			//Console.WriteLine(code);
 			//Console.WriteLine(data);
-			return;
+			//return;
 
 			File.WriteAllText(@"C:\Atos\AppStudio\AppStudio\Objects.cs", string.Format(@"using System;
 using AppCore.ViewModels;
@@ -208,19 +181,19 @@ namespace AppStudio
 }}
 ", code));
 
-			File.WriteAllText(@"C:\Atos\AppStudio\AppStudio\DataProviders.cs", string.Format(@"using System;
-using System.Collections.Generic;
-using AppCore;
-using AppCore.Data;
+//			File.WriteAllText(@"C:\Atos\AppStudio\AppStudio\DataProviders.cs", string.Format(@"using System;
+//using System.Collections.Generic;
+//using AppCore;
+//using AppCore.Data;
 
-namespace AppStudio
-{{
-	public static class DataProviders
-	{{
-		{0}
-	}}
-}}
-", data));
+//namespace AppStudio
+//{{
+//	public static class DataProviders
+//	{{
+//		{0}
+//	}}
+//}}
+//", data));
 
 		}
 
@@ -234,7 +207,24 @@ namespace AppStudio
 				DataGenerator.City,
 				DataGenerator.PersonName,
 				DataGenerator.Barcode,
-				EquipmentPower
+				() =>
+				{
+					var powers = new[]
+					{
+						@"500",
+						@"600",
+						@"800",
+						@"900",
+						@"1000",
+						@"1100",
+						@"1200",
+						@"1400",
+						@"1600",
+						@"2000",
+						@"2500",
+					};
+					return powers[Rnd.Next(powers.Length)];
+				}
 			}))
 			{
 				foreach (var v in val)

@@ -13,6 +13,7 @@ namespace AppStudio.EquipmentModule.ViewModels
 	// TODO : Generate this
 	public sealed class EquipmentsViewModel : PageViewModel
 	{
+		// TODO : Generate this
 		private List<EquipmentViewModel> Equipments { get; } = new List<EquipmentViewModel>();
 
 		public string SearchHint { get; }
@@ -32,11 +33,8 @@ namespace AppStudio.EquipmentModule.ViewModels
 
 		public ICommand ClearSearchCommand { get; }
 
-		public SortOption SerialNumberOption { get; }
-
-		public ICommand SelectSortOptionCommand { get; }
-
 		// TODO : !!! Generate this method
+		public SortOption SerialNumberOption { get; }
 		private SortOption[] SortOptions
 		{
 			get
@@ -47,6 +45,8 @@ namespace AppStudio.EquipmentModule.ViewModels
 				};
 			}
 		}
+
+		public ICommand SelectSortOptionCommand { get; }
 
 		private List<EquipmentViewModel> _currentEquipments = new List<EquipmentViewModel>(0);
 		public List<EquipmentViewModel> CurrentEquipments
@@ -60,6 +60,8 @@ namespace AppStudio.EquipmentModule.ViewModels
 		public EquipmentsViewModel(MainContext mainContext) : base(mainContext)
 		{
 			var localization = this.MainContext.GetService<ILocalization>();
+
+			this.ClearSearchCommand = new Command(this.ClearSearch);
 
 			// TODO : Generate this method
 			var serialNumberCaption = localization.GetValue(nameof(EquipmentProperty.SerialNumber));

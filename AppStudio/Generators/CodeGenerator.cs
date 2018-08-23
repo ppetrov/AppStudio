@@ -18,8 +18,9 @@ namespace AppStudio.Generators
 			public readonly string Name;
 			public readonly string VariableName;
 			public readonly bool IsCaption;
+			public readonly bool GenerateField = true;
 
-			public Property(Column column, KeyValuePair<string, bool> type, string name, EntityConfig referenceEntityConfig, bool isCaption = false)
+			public Property(Column column, KeyValuePair<string, bool> type, string name, EntityConfig referenceEntityConfig, bool isCaption = false, bool generateField = true)
 			{
 				this.Column = column;
 				this.ReferenceEntityConfig = referenceEntityConfig;
@@ -28,6 +29,7 @@ namespace AppStudio.Generators
 				this.Name = name;
 				this.VariableName = NameProvider.GetVariableName(name);
 				this.IsCaption = isCaption;
+				this.GenerateField = generateField;
 			}
 
 			private Property(Column column, string type, bool isReferenceType, string name, EntityConfig referenceEntityConfig)
@@ -110,7 +112,7 @@ namespace AppStudio.Generators
 				}).ToList();
 
 			properties.Insert(0, new Property(null, new KeyValuePair<string, bool>(modelClassName, true), modelClassName, null));
-			properties.Insert(1, new Property(null, new KeyValuePair<string, bool>(captionsClassName, true), @"Captions", null));
+			properties.Insert(1, new Property(null, new KeyValuePair<string, bool>(captionsClassName, true), @"Captions", null, generateField: false));
 
 			GenerateClass(buffer, className, properties, @"ViewModel", AppendViewModelConstructor);
 		}
@@ -295,9 +297,9 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 			buffer.AppendLine();
 
 			// Constructor
-			var currentContructor = constructor ?? AppendConstructor;
+			var currentConstructor = constructor ?? AppendConstructor;
 
-			currentContructor(buffer, properties, className);
+			currentConstructor(buffer, properties, className);
 
 			buffer.AppendLine(@"}");
 		}
@@ -306,6 +308,10 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 		{
 			foreach (var property in properties)
 			{
+				if (!property.GenerateField)
+				{
+					continue;
+				}
 				buffer.Append(@"public");
 				buffer.Append(@" ");
 				buffer.Append(property.Type);
@@ -362,8 +368,8 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 			AppendParametersGuards(buffer, dataProperties);
 
 			// Assign Parameters
-			AppendAssignParameters(buffer, dataProperties);
-			AppendAssignViewModelParameters(buffer, properties.Skip(2));
+			AppendAssignParameters(buffer, dataProperties.Take(1));
+			AppendAssignViewModelParameters(buffer, dataProperties[0].VariableName, properties.Skip(2));
 
 			buffer.AppendLine(@"}");
 		}
@@ -424,7 +430,7 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 			}
 		}
 
-		private static void AppendAssignViewModelParameters(StringBuilder buffer, IEnumerable<Property> properties)
+		private static void AppendAssignViewModelParameters(StringBuilder buffer, string modelName, IEnumerable<Property> properties)
 		{
 			foreach (var property in properties)
 			{
@@ -436,7 +442,7 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 					buffer.Append(@"Caption");
 				}
 				buffer.Append(@" = ");
-				buffer.Append(property.IsCaption ? @"captions" : @"equipment");
+				buffer.Append(property.IsCaption ? @"captions" : modelName);
 				buffer.Append(@".");
 				buffer.Append(property.Name);
 				if (!property.IsCaption)
