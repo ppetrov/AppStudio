@@ -74,7 +74,7 @@ namespace AppStudio.Generators
 			var className = entityConfig.ClassName;
 			var properties = GetProperties(table, config, entityConfig);
 
-			GenerateClass(buffer, className, properties);
+			GenerateClass(buffer, className, properties, AppendConstructor);
 		}
 
 		public static void GenerateCaptionsClass(StringBuilder buffer, Table table, ProjectConfig config)
@@ -90,7 +90,7 @@ namespace AppStudio.Generators
 				.Select(v => new Property(v.Column, MapType(SqlDataType.String), v.Name, v.ReferenceEntityConfig))
 				.ToList();
 
-			GenerateClass(buffer, className, properties);
+			GenerateClass(buffer, className, properties, AppendConstructor);
 		}
 
 		public static void GenerateViewModel(StringBuilder buffer, Table table, ProjectConfig config)
@@ -114,7 +114,7 @@ namespace AppStudio.Generators
 			properties.Insert(0, new Property(null, new KeyValuePair<string, bool>(modelClassName, true), modelClassName, null));
 			properties.Insert(1, new Property(null, new KeyValuePair<string, bool>(captionsClassName, true), @"Captions", null, generateField: false));
 
-			GenerateClass(buffer, className, properties, @"ViewModel", AppendViewModelConstructor);
+			GenerateClass(buffer, className, properties, AppendViewModelConstructor, @"ViewModel");
 		}
 
 		public static void GeneratePropertyEnum(StringBuilder buffer, Table table, ProjectConfig config)
@@ -258,6 +258,17 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 				primaryKey);
 		}
 
+		public static void GenerateParametersClass(StringBuilder buffer, Table table, ProjectConfig config)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (table == null) throw new ArgumentNullException(nameof(table));
+			if (config == null) throw new ArgumentNullException(nameof(config));
+
+			var entityConfig = config.GetEntityConfig(table.Name);
+			var className = entityConfig.ClassName + @"Parameters";
+
+			GenerateClass(buffer, className, new List<Property>(0), null);
+		}
 
 		private static List<Property> GetProperties(Table table, ProjectConfig config, EntityConfig entityConfig)
 		{
@@ -271,7 +282,7 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 			return properties;
 		}
 
-		private static void GenerateClass(StringBuilder buffer, string className, List<Property> properties, string baseClass = "", Action<StringBuilder, List<Property>, string> constructor = null)
+		private static void GenerateClass(StringBuilder buffer, string className, List<Property> properties, Action<StringBuilder, List<Property>, string> constructor, string baseClass = "")
 		{
 			// Definition
 			buffer.Append(@"public");
@@ -297,9 +308,7 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 			buffer.AppendLine();
 
 			// Constructor
-			var currentConstructor = constructor ?? AppendConstructor;
-
-			currentConstructor(buffer, properties, className);
+			constructor?.Invoke(buffer, properties, className);
 
 			buffer.AppendLine(@"}");
 		}

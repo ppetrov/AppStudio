@@ -27,8 +27,7 @@ namespace AppStudio.EquipmentModule.ViewModels
 			{
 				try
 				{
-					var dataProvider = this.MainContext.GetService<EquipmentDataProvider>();
-					var viewModels = dataProvider
+					var viewModels = EquipmentDataProvider
 						.GetEquipments(this.MainContext, parameter as EquipmentsParameters)
 						.Select(v => new EquipmentViewModel(v, this.ViewModel.Captions));
 
@@ -37,6 +36,10 @@ namespace AppStudio.EquipmentModule.ViewModels
 						try
 						{
 							this.ViewModel.LoadData(viewModels);
+						}
+						catch (Exception ex)
+						{
+							this.MainContext.Log(ex);
 						}
 						finally
 						{

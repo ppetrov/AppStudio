@@ -8,7 +8,6 @@ namespace AppStudio.EquipmentModule.ViewModels
 	public sealed class EquipmentViewModel : ViewModel
 	{
 		public Equipment Equipment { get; }
-		public EquipmentCaptions Captions { get; }
 		public string SerialNumber { get; }
 		public string SerialNumberCaption { get; }
 		public string Power { get; }
@@ -22,7 +21,6 @@ namespace AppStudio.EquipmentModule.ViewModels
 			if (captions == null) throw new ArgumentNullException(nameof(captions));
 
 			this.Equipment = equipment;
-			this.Captions = captions;
 			this.SerialNumber = equipment.SerialNumber;
 			this.SerialNumberCaption = captions.SerialNumber;
 			this.Power = equipment.Power.ToString(@"F2");

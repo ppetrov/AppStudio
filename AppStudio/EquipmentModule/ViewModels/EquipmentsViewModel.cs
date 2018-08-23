@@ -82,12 +82,19 @@ namespace AppStudio.EquipmentModule.ViewModels
 		{
 			if (parameter == null) throw new ArgumentNullException(nameof(parameter));
 
-			var viewModels = parameter as IEnumerable<EquipmentViewModel>;
+			try
+			{
+				var viewModels = parameter as IEnumerable<EquipmentViewModel>;
 
-			this.Equipments.Clear();
-			this.Equipments.AddRange(viewModels);
+				this.Equipments.Clear();
+				this.Equipments.AddRange(viewModels);
 
-			this.ApplyTextSearch();
+				this.ApplyTextSearch();
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.Log(ex);
+			}
 		}
 
 		private void SelectSortOption()

@@ -11,6 +11,8 @@ using AppStudio;
 using AppStudio.Config;
 using AppStudio.Data;
 using AppStudio.Db;
+using AppStudio.EquipmentModule;
+using AppStudio.EquipmentModule.Models;
 using AppStudio.Generators;
 
 namespace DemoClient
@@ -43,6 +45,15 @@ namespace DemoClient
 
 			using (var dbContext = new DbContext(cnString))
 			{
+				//using (var localCtx = new DbContext(cnString))
+				//{
+				//	var eqs = EquipmentDataProvider.GetEquipments(localCtx, new EquipmentsParameters(DateTime.Today));
+				//	foreach (var e in eqs)
+				//	{
+				//		Console.WriteLine(e);
+				//	}
+				//}
+
 				var tables = DataProvider.GetTables(dbContext);
 
 				foreach (var table in tables)
@@ -103,10 +114,14 @@ namespace DemoClient
 					CodeGenerator.GenerateCaptionsClass(buffer, table, projectConfig);
 					buffer.AppendLine();
 					CodeGenerator.GenerateViewModel(buffer, table, projectConfig);
-					//buffer.AppendLine();
-					//CodeGenerator.GeneratePropertyEnum(buffer, table, projectConfig);
-					//Console.WriteLine(buffer.ToString());
-					//Console.WriteLine();
+					buffer.AppendLine();
+					CodeGenerator.GeneratePropertyEnum(buffer, table, projectConfig);
+					Console.WriteLine(buffer.ToString());
+					CodeGenerator.GenerateParametersClass(buffer, table, projectConfig);
+					Console.WriteLine(buffer.ToString());
+
+
+					Console.WriteLine();
 
 					classes.AppendLine(buffer.ToString());
 
@@ -181,19 +196,19 @@ namespace AppStudio
 }}
 ", code));
 
-//			File.WriteAllText(@"C:\Atos\AppStudio\AppStudio\DataProviders.cs", string.Format(@"using System;
-//using System.Collections.Generic;
-//using AppCore;
-//using AppCore.Data;
+			//			File.WriteAllText(@"C:\Atos\AppStudio\AppStudio\DataProviders.cs", string.Format(@"using System;
+			//using System.Collections.Generic;
+			//using AppCore;
+			//using AppCore.Data;
 
-//namespace AppStudio
-//{{
-//	public static class DataProviders
-//	{{
-//		{0}
-//	}}
-//}}
-//", data));
+			//namespace AppStudio
+			//{{
+			//	public static class DataProviders
+			//	{{
+			//		{0}
+			//	}}
+			//}}
+			//", data));
 
 		}
 
