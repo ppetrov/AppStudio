@@ -10,7 +10,7 @@ namespace AppCore
 	public sealed class MainContext
 	{
 		private ServiceLocator ServiceLocator { get; } = new ServiceLocator();
-		private FeatureManager FeatureManager { get; } = new FeatureManager();
+		public FeatureManager FeatureManager { get; } = new FeatureManager();
 		public DataCache DataCache { get; } = new DataCache();
 
 		public T GetService<T>() where T : class

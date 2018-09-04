@@ -10,10 +10,11 @@ using AppStudio.EquipmentModule.Models;
 
 namespace AppStudio.EquipmentModule.ViewModels
 {
-	// TODO : Generate this
+
+	// Type
+	// Multiple of Type
 	public sealed class EquipmentsViewModel : PageViewModel
 	{
-		// TODO : Generate this
 		private List<EquipmentViewModel> Equipments { get; } = new List<EquipmentViewModel>();
 
 		public string SearchHint { get; }
@@ -26,25 +27,44 @@ namespace AppStudio.EquipmentModule.ViewModels
 			{
 				if (this.SetProperty(ref _searchText, value))
 				{
-					this.ApplyTextSearch();
+					var feature = new Feature(nameof(EquipmentsViewModel), nameof(this.ApplyTextSearch));
+					try
+					{
+						// Log only the first usage of the search text,
+						// the transition from empty to non-empty.
+						if (string.IsNullOrWhiteSpace(_searchText) &&
+							!string.IsNullOrWhiteSpace(value))
+						{
+							this.MainContext.Save(feature);
+						}
+
+						this.ApplyTextSearch();
+					}
+					catch (Exception ex)
+					{
+						this.MainContext.Save(feature, ex);
+					}
 				}
 			}
 		}
 
 		public ICommand ClearSearchCommand { get; }
 
-		// TODO : !!! Generate this method
-		public SortOption SerialNumberOption { get; }
 		private SortOption[] SortOptions
 		{
 			get
 			{
 				return new[]
 				{
-					this.SerialNumberOption
+					this.SerialNumberOption,
+					this.PowerOption,
+					this.LastCheckedOption,
 				};
 			}
 		}
+		public SortOption SerialNumberOption { get; }
+		public SortOption PowerOption { get; }
+		public SortOption LastCheckedOption { get; }
 
 		public ICommand SelectSortOptionCommand { get; }
 
@@ -64,26 +84,33 @@ namespace AppStudio.EquipmentModule.ViewModels
 			this.ClearSearchCommand = new Command(this.ClearSearch);
 
 			// TODO : Generate this method
+			// ???????? How to do it ?!?!?! 
+			// Localization ?!?!?!!?
 			var serialNumberCaption = localization.GetValue(nameof(EquipmentProperty.SerialNumber));
 			var powerCaption = localization.GetValue(string.Empty);
 			var lastCheckedCaption = localization.GetValue(string.Empty);
 			this.Captions = new EquipmentCaptions(serialNumberCaption, powerCaption, lastCheckedCaption);
+			// End of code gen ?????
 
 			this.SearchHint = localization.GetValue(string.Empty);
-			//this.ClearSearchCommand = new ActionCommand(this.ClearSearch);
+			this.ClearSearchCommand = new Command(this.ClearSearch);
 
-			// TODO : Generate this method
 			this.SerialNumberOption = new SortOption(serialNumberCaption, EquipmentProperty.SerialNumber);
+			this.PowerOption = new SortOption(powerCaption, EquipmentProperty.Power);
+			this.LastCheckedOption = new SortOption(lastCheckedCaption, EquipmentProperty.LastChecked);
 
-			//this.SelectSortOptionCommand = new ActionCommand(this.SelectSortOption);
+			this.SelectSortOptionCommand = new Command(this.SelectSortOption);
 		}
 
 		public override void LoadData(object parameter)
 		{
 			if (parameter == null) throw new ArgumentNullException(nameof(parameter));
 
+			var featureManager = this.MainContext.FeatureManager;
 			try
 			{
+				featureManager.IsEnabled = false;
+
 				var viewModels = parameter as IEnumerable<EquipmentViewModel>;
 
 				this.Equipments.Clear();
@@ -94,6 +121,10 @@ namespace AppStudio.EquipmentModule.ViewModels
 			catch (Exception ex)
 			{
 				this.MainContext.Log(ex);
+			}
+			finally
+			{
+				featureManager.IsEnabled = true;
 			}
 		}
 
@@ -129,27 +160,18 @@ namespace AppStudio.EquipmentModule.ViewModels
 
 		private void ApplyTextSearch()
 		{
+			var matches = new List<EquipmentViewModel>();
+
 			var searchText = this.SearchText;
-
-			var capacity = 0;
-			if (string.IsNullOrEmpty(searchText))
-			{
-				capacity = this.Equipments.Count;
-			}
-			var results = new List<EquipmentViewModel>(capacity);
-
 			foreach (var viewModel in this.Equipments)
 			{
-				//
-				// TODO : Define search method
-				// 
-				if (viewModel.SerialNumber.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0)
+				if (IsTextMatch(viewModel, searchText))
 				{
-					results.Add(viewModel);
+					matches.Add(viewModel);
 				}
 			}
 
-			this.CurrentEquipments = results;
+			this.CurrentEquipments = matches;
 		}
 
 		// TODO : Generate this method
@@ -187,5 +209,14 @@ namespace AppStudio.EquipmentModule.ViewModels
 				equipments.Reverse();
 			}
 		}
+
+		private static bool IsTextMatch(EquipmentViewModel viewModel, string searchText)
+		{
+			return
+				viewModel.SerialNumber.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||
+				viewModel.Power.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||
+				viewModel.LastChecked.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0;
+		}
+
 	}
 }

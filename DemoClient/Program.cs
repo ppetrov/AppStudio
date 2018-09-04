@@ -11,8 +11,6 @@ using AppStudio;
 using AppStudio.Config;
 using AppStudio.Data;
 using AppStudio.Db;
-using AppStudio.EquipmentModule;
-using AppStudio.EquipmentModule.Models;
 using AppStudio.Generators;
 
 namespace DemoClient
@@ -54,7 +52,7 @@ namespace DemoClient
 				//	}
 				//}
 
-				var tables = DataProvider.GetTables(dbContext);
+				var tables = DataProvider.GetTables(dbContext).Where(t => t.Name.IndexOf(@"Equipment", StringComparison.OrdinalIgnoreCase) >= 0);
 
 				foreach (var table in tables)
 				{
@@ -63,7 +61,7 @@ namespace DemoClient
 						table.Name.IndexOf(@"open_balance", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						table.Name.IndexOf(@"factory_cal", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						table.Name.IndexOf(@"Visit_dat", StringComparison.OrdinalIgnoreCase) >= 0 ||
-						table.Name.IndexOf(@"Equipment", StringComparison.OrdinalIgnoreCase) >= 0 ||
+						//table.Name.IndexOf(@"Equipment", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						table.Name.IndexOf(@"Temp_data", StringComparison.OrdinalIgnoreCase) >= 0)
 					{
 						continue;
@@ -119,6 +117,17 @@ namespace DemoClient
 					Console.WriteLine(buffer.ToString());
 					CodeGenerator.GenerateParametersClass(buffer, table, projectConfig);
 					Console.WriteLine(buffer.ToString());
+					CodeGenerator.GenerateSortOptionsArray(buffer, table, projectConfig);
+					Console.WriteLine(buffer.ToString());
+					CodeGenerator.GenerateSortOptionsProperties(buffer, table, projectConfig);
+					Console.WriteLine(buffer.ToString());
+					CodeGenerator.GenerateSortOptionsInitialization(buffer, table, projectConfig);
+					Console.WriteLine(buffer.ToString());
+					CodeGenerator.GenerateIsTextMatchMethod(buffer, table, projectConfig);
+					Console.WriteLine(buffer.ToString());
+
+
+
 
 
 					Console.WriteLine();
@@ -178,6 +187,8 @@ namespace DemoClient
 			//Console.WriteLine(code.Length);
 			//Console.WriteLine(data.Length);
 
+			Console.WriteLine(code);
+
 			foreach (var s in register.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries))
 			{
 				Debug.WriteLine(s);
@@ -187,14 +198,14 @@ namespace DemoClient
 			//Console.WriteLine(data);
 			//return;
 
-			File.WriteAllText(@"C:\Atos\AppStudio\AppStudio\Objects.cs", string.Format(@"using System;
-using AppCore.ViewModels;
+			//			File.WriteAllText(@"C:\Atos\AppStudio\AppStudio\Objects.cs", string.Format(@"using System;
+			//using AppCore.ViewModels;
 
-namespace AppStudio
-{{
-	{0}
-}}
-", code));
+			//namespace AppStudio
+			//{{
+			//	{0}
+			//}}
+			//", code));
 
 			//			File.WriteAllText(@"C:\Atos\AppStudio\AppStudio\DataProviders.cs", string.Format(@"using System;
 			//using System.Collections.Generic;

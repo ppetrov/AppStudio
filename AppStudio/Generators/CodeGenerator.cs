@@ -270,6 +270,92 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 			GenerateClass(buffer, className, new List<Property>(0), null);
 		}
 
+		public static void GenerateSortOptionsArray(StringBuilder buffer, Table table, ProjectConfig config)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (table == null) throw new ArgumentNullException(nameof(table));
+			if (config == null) throw new ArgumentNullException(nameof(config));
+
+			buffer.AppendLine(@"private SortOption[] SortOptions");
+			buffer.AppendLine(@"{");
+			buffer.AppendLine(@"get");
+			buffer.AppendLine(@"{");
+			buffer.AppendLine(@"return new[]");
+			buffer.AppendLine(@"{");
+			var entityConfig = config.GetEntityConfig(table.Name);
+			var properties = GetProperties(table, config, entityConfig);
+			Generate(buffer, properties,
+				p => string.Format(@"this.{0}Option,", p.Name, p.Name));
+
+			buffer.AppendLine(@"};");
+			buffer.AppendLine(@"}");
+			buffer.AppendLine(@"}");
+		}
+
+		public static void GenerateSortOptionsProperties(StringBuilder buffer, Table table, ProjectConfig config)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (table == null) throw new ArgumentNullException(nameof(table));
+			if (config == null) throw new ArgumentNullException(nameof(config));
+
+			var entityConfig = config.GetEntityConfig(table.Name);
+			var properties = GetProperties(table, config, entityConfig);
+
+			Generate(buffer, properties,
+				p => string.Format(@"public SortOption {0}Option {{ get; }}", p.Name));
+		}
+
+		public static void GenerateSortOptionsInitialization(StringBuilder buffer, Table table, ProjectConfig config)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (table == null) throw new ArgumentNullException(nameof(table));
+			if (config == null) throw new ArgumentNullException(nameof(config));
+
+			var entityConfig = config.GetEntityConfig(table.Name);
+			var properties = GetProperties(table, config, entityConfig);
+
+			Generate(buffer, properties,
+				p => string.Format(@"this.{0}Option = new SortOption({1}Caption, {2}Property.{0});", p.Name, p.VariableName, entityConfig.ClassName));
+		}
+
+		private static void Generate(StringBuilder buffer, List<Property> properties, Func<Property, string> generator)
+		{
+			foreach (var property in properties)
+			{
+				if (property.Column.IsPrimaryKey)
+				{
+					continue;
+				}
+				buffer.Append(generator(property));
+				buffer.AppendLine();
+			}
+		}
+
+		public static void GenerateIsTextMatchMethod(StringBuilder buffer, Table table, ProjectConfig config)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (table == null) throw new ArgumentNullException(nameof(table));
+			if (config == null) throw new ArgumentNullException(nameof(config));
+
+			var entityConfig = config.GetEntityConfig(table.Name);
+			var properties = GetProperties(table, config, entityConfig);
+
+			buffer.AppendFormat(@"private static bool IsTextMatch({0}ViewModel viewModel, string searchText)", entityConfig.ClassName);
+			buffer.AppendLine();
+			buffer.AppendLine(@"{");
+			buffer.AppendLine(@"return");
+
+			Generate(buffer, properties,
+				p => string.Format(@"viewModel.{0}.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||", p.Name));
+
+			var newLine = Environment.NewLine;
+			buffer[buffer.Length - newLine.Length - 3] = ';';
+			buffer[buffer.Length - newLine.Length - 2] = ' ';
+			buffer[buffer.Length - newLine.Length - 1] = ' ';
+
+			buffer.AppendLine(@"}");
+		}
+
 		private static List<Property> GetProperties(Table table, ProjectConfig config, EntityConfig entityConfig)
 		{
 			var properties = new List<Property>(table.Columns.Length);

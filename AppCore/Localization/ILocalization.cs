@@ -7,5 +7,5 @@ namespace AppCore.Localization
 		string GetValue(string key);
 
 		void LoadValues(IEnumerable<KeyValuePair<string, string>> values);
-	}
+	}	
 }
