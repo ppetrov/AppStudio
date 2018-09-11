@@ -8,9 +8,9 @@ namespace AppStudio.EquipmentModule.Models
 		public long Id { get; }
 		public string SerialNumber { get; }
 		public decimal Power { get; }
-		public DateTime LastChecked { get; }
+		public DateTime? LastChecked { get; }
 
-		public Equipment(long id, string serialNumber, decimal power, DateTime lastChecked)
+		public Equipment(long id, string serialNumber, decimal power, DateTime? lastChecked)
 		{
 			if (serialNumber == null) throw new ArgumentNullException(nameof(serialNumber));
 

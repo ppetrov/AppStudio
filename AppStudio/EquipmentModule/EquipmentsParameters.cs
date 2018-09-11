@@ -1,6 +1,6 @@
 ﻿namespace AppStudio.EquipmentModule
 {
-	public sealed class EquipmentsParameters
-	{		
-	}
+	//public sealed class EquipmentsParameters
+	//{		
+	//}
 }

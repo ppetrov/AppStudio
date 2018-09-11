@@ -28,7 +28,7 @@ namespace AppStudio.EquipmentModule.ViewModels
 				try
 				{
 					var viewModels = EquipmentDataProvider
-						.GetEquipments(this.MainContext, parameter as EquipmentsParameters)
+						.GetEquipments(this.MainContext)
 						.Select(v => new EquipmentViewModel(v, this.ViewModel.Captions));
 
 					this.MainContext.BeginInvokeOnMainThread(() =>

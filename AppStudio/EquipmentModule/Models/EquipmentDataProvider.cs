@@ -6,13 +6,12 @@ using AppCore.Data;
 
 namespace AppStudio.EquipmentModule.Models
 {
-	// TODO : 
+	// TODO : Generate this class
 	public static class EquipmentDataProvider
 	{
-		public static List<Equipment> GetEquipments(MainContext mainContext, EquipmentsParameters parameters)
+		public static List<Equipment> GetEquipments(MainContext mainContext)
 		{
 			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
-			if (parameters == null) throw new ArgumentNullException(nameof(parameters));
 
 			List<Equipment> equipments;
 

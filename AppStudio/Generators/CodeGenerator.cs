@@ -111,7 +111,7 @@ namespace AppStudio.Generators
 					new Property(v.Column, MapType(SqlDataType.String), v.Name, v.ReferenceEntityConfig, true),
 				}).ToList();
 
-			properties.Insert(0, new Property(null, new KeyValuePair<string, bool>(modelClassName, true), modelClassName, null));
+			properties.Insert(0, new Property(null, new KeyValuePair<string, bool>(modelClassName, true), @"Model", null));
 			properties.Insert(1, new Property(null, new KeyValuePair<string, bool>(captionsClassName, true), @"Captions", null, generateField: false));
 
 			GenerateClass(buffer, className, properties, AppendViewModelConstructor, @"ViewModel");
@@ -322,10 +322,16 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 		{
 			foreach (var property in properties)
 			{
-				if (property.Column.IsPrimaryKey)
+				var column = property.Column;
+				if (column.IsPrimaryKey)
 				{
 					continue;
 				}
+				if (column.Type == SqlDataType.ByteArray)
+				{
+					continue;
+				}
+
 				buffer.Append(generator(property));
 				buffer.AppendLine();
 			}
@@ -352,6 +358,79 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 			buffer[buffer.Length - newLine.Length - 3] = ';';
 			buffer[buffer.Length - newLine.Length - 2] = ' ';
 			buffer[buffer.Length - newLine.Length - 1] = ' ';
+
+			buffer.AppendLine(@"}");
+		}
+
+		public static void GenerateSortMethod(StringBuilder buffer, Table table, ProjectConfig config)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (table == null) throw new ArgumentNullException(nameof(table));
+			if (config == null) throw new ArgumentNullException(nameof(config));
+
+			var entityConfig = config.GetEntityConfig(table.Name);
+			var properties = GetProperties(table, config, entityConfig);
+
+			buffer.AppendFormat(@"private static void Sort(List<{0}ViewModel> viewModels, SortOption sortOption, {0}Property property)", entityConfig.ClassName);
+			buffer.AppendLine();
+			buffer.AppendLine(@"{");
+
+			buffer.AppendLine(@"switch (property)");
+			buffer.AppendLine(@"{");
+
+			Generate(buffer, properties,
+				p =>
+				{
+					var column = p.Column;
+
+					if (column.Type == SqlDataType.DateTime && column.IsNullable)
+					{
+						return string.Format(@"case {1}Property.{0}:
+				viewModels.Sort((x, y) => 
+{{
+var cmp = (x.Model.{0} ?? DateTime.MinValue).CompareTo((y.Model.{0} ?? DateTime.MinValue));
+if (cmp == 0)
+{{
+	cmp = x.Model.Id.CompareTo(y.Model.Id);
+}}
+return cmp;
+}});
+				break;", p.Name, entityConfig.ClassName);
+					}
+					switch (column.Type)
+					{
+						case SqlDataType.Int:
+						case SqlDataType.Long:
+						case SqlDataType.Decimal:
+						case SqlDataType.DateTime:
+							return string.Format(@"case {1}Property.{0}:
+				viewModels.Sort((x, y) => 
+{{
+var cmp = x.Model.{0}.CompareTo(y.Model.{0});
+if (cmp == 0)
+{{
+	cmp = x.Model.Id.CompareTo(y.Model.Id);
+}}
+return cmp;
+}});
+				break;", p.Name, entityConfig.ClassName);
+					}
+
+					// Sort by string
+					return string.Format(@"case {1}Property.{0}:
+				viewModels.Sort((x, y) => string.Compare(x.{0}, y.{0}, StringComparison.OrdinalIgnoreCase));
+				break;", p.Name, entityConfig.ClassName);
+				});
+
+			buffer.AppendLine(@"default:");
+			buffer.AppendLine(@"throw new ArgumentOutOfRangeException();");
+			buffer.AppendLine(@"}");
+
+			buffer.AppendLine();
+			buffer.AppendLine(@"if ((sortOption.SortDirection ?? SortDirection.Asc) == SortDirection.Desc)");
+			buffer.AppendLine(@"{");
+			buffer.AppendLine(@"viewModels.Reverse();");
+			buffer.AppendLine(@"}");
 
 			buffer.AppendLine(@"}");
 		}
@@ -542,7 +621,8 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 				buffer.Append(property.Name);
 				if (!property.IsCaption)
 				{
-					switch (property.Column.Type)
+					var column = property.Column;
+					switch (column.Type)
 					{
 						case SqlDataType.Int:
 						case SqlDataType.Long:
@@ -555,7 +635,18 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 							break;
 						case SqlDataType.DateTime:
 							buffer.Append(@".");
-							buffer.Append(@"ToString(@""dd MMM yyyy"")");
+							if (column.IsNullable)
+							{
+								buffer.Append(@"HasValue ? ");
+								buffer.Append(modelName);
+								buffer.Append(@".");
+								buffer.Append(property.Name);
+								buffer.Append(@".Value.ToString(@""dd MMM yyyy"") : GetValue(string.Empty);");
+							}
+							else
+							{
+								buffer.Append(@"ToString(@""dd MMM yyyy"")");
+							}
 							break;
 					}
 				}
@@ -711,13 +802,13 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 		{
 			if (column.ForeignKey == null)
 			{
-				return MapType(column.Type);
+				return MapType(column.Type, column.IsNullable);
 			}
 
 			return new KeyValuePair<string, bool>(config.GetEntityConfig(column.ForeignKey.TableName).ClassName, true);
 		}
 
-		private static KeyValuePair<string, bool> MapType(SqlDataType type)
+		private static KeyValuePair<string, bool> MapType(SqlDataType type, bool isNullable = true)
 		{
 			switch (type)
 			{
@@ -728,7 +819,9 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 				case SqlDataType.Decimal:
 					return new KeyValuePair<string, bool>(@"decimal", false);
 				case SqlDataType.DateTime:
-					return new KeyValuePair<string, bool>(@"DateTime", false);
+					return isNullable
+						? new KeyValuePair<string, bool>(@"DateTime?", false)
+						: new KeyValuePair<string, bool>(@"DateTime", false);
 				case SqlDataType.String:
 					return new KeyValuePair<string, bool>(@"string", true);
 				case SqlDataType.ByteArray:

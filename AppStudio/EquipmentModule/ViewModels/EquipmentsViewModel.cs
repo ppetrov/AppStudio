@@ -10,7 +10,6 @@ using AppStudio.EquipmentModule.Models;
 
 namespace AppStudio.EquipmentModule.ViewModels
 {
-
 	// Type
 	// Multiple of Type
 	public sealed class EquipmentsViewModel : PageViewModel
@@ -81,23 +80,16 @@ namespace AppStudio.EquipmentModule.ViewModels
 		{
 			var localization = this.MainContext.GetService<ILocalization>();
 
-			this.ClearSearchCommand = new Command(this.ClearSearch);
+			this.SearchHint = localization.GetValue(string.Empty);
 
 			// TODO : Generate this method
-			// ???????? How to do it ?!?!?! 
-			// Localization ?!?!?!!?
-			var serialNumberCaption = localization.GetValue(nameof(EquipmentProperty.SerialNumber));
-			var powerCaption = localization.GetValue(string.Empty);
-			var lastCheckedCaption = localization.GetValue(string.Empty);
-			this.Captions = new EquipmentCaptions(serialNumberCaption, powerCaption, lastCheckedCaption);
-			// End of code gen ?????
+			//var captions = new EquipmentCaptions(serialNumberCaption, powerCaption, lastCheckedCaption);
+			this.SerialNumberOption = new SortOption(localization.GetValue(nameof(EquipmentProperty.SerialNumber)), EquipmentProperty.SerialNumber);
+			this.PowerOption = new SortOption(localization.GetValue(nameof(EquipmentProperty.Power)), EquipmentProperty.Power);
+			this.LastCheckedOption = new SortOption(localization.GetValue(nameof(EquipmentProperty.LastChecked)), EquipmentProperty.LastChecked);
+			this.Captions = new EquipmentCaptions("", "", "");
 
-			this.SearchHint = localization.GetValue(string.Empty);
 			this.ClearSearchCommand = new Command(this.ClearSearch);
-
-			this.SerialNumberOption = new SortOption(serialNumberCaption, EquipmentProperty.SerialNumber);
-			this.PowerOption = new SortOption(powerCaption, EquipmentProperty.Power);
-			this.LastCheckedOption = new SortOption(lastCheckedCaption, EquipmentProperty.LastChecked);
 
 			this.SelectSortOptionCommand = new Command(this.SelectSortOption);
 		}
@@ -106,11 +98,8 @@ namespace AppStudio.EquipmentModule.ViewModels
 		{
 			if (parameter == null) throw new ArgumentNullException(nameof(parameter));
 
-			var featureManager = this.MainContext.FeatureManager;
 			try
 			{
-				featureManager.IsEnabled = false;
-
 				var viewModels = parameter as IEnumerable<EquipmentViewModel>;
 
 				this.Equipments.Clear();
@@ -121,10 +110,6 @@ namespace AppStudio.EquipmentModule.ViewModels
 			catch (Exception ex)
 			{
 				this.MainContext.Log(ex);
-			}
-			finally
-			{
-				featureManager.IsEnabled = true;
 			}
 		}
 
@@ -174,7 +159,6 @@ namespace AppStudio.EquipmentModule.ViewModels
 			this.CurrentEquipments = matches;
 		}
 
-		// TODO : Generate this method
 		private void ApplySort(SortOption sortOption)
 		{
 			foreach (var option in this.SortOptions)
@@ -192,13 +176,34 @@ namespace AppStudio.EquipmentModule.ViewModels
 			this.CurrentEquipments = new List<EquipmentViewModel>(this.CurrentEquipments);
 		}
 
-		// TODO : Generate this method
-		private static void Sort(List<EquipmentViewModel> equipments, SortOption sortOption, EquipmentProperty property)
+		private static void Sort(List<EquipmentViewModel> viewModels, SortOption sortOption, EquipmentProperty property)
 		{
 			switch (property)
 			{
 				case EquipmentProperty.SerialNumber:
-					equipments.Sort((x, y) => string.Compare(x.SerialNumber, y.SerialNumber, StringComparison.OrdinalIgnoreCase));
+					viewModels.Sort((x, y) => string.Compare(x.SerialNumber, y.SerialNumber, StringComparison.OrdinalIgnoreCase));
+					break;
+				case EquipmentProperty.Power:
+					viewModels.Sort((x, y) =>
+					{
+						var cmp = x.Model.Power.CompareTo(y.Model.Power);
+						if (cmp == 0)
+						{
+							cmp = x.Model.Id.CompareTo(y.Model.Id);
+						}
+						return cmp;
+					});
+					break;
+				case EquipmentProperty.LastChecked:
+					viewModels.Sort((x, y) =>
+					{
+						var cmp = (x.Model.LastChecked ?? DateTime.MinValue).CompareTo((y.Model.LastChecked ?? DateTime.MinValue));
+						if (cmp == 0)
+						{
+							cmp = x.Model.Id.CompareTo(y.Model.Id);
+						}
+						return cmp;
+					});
 					break;
 				default:
 					throw new ArgumentOutOfRangeException();
@@ -206,7 +211,7 @@ namespace AppStudio.EquipmentModule.ViewModels
 
 			if ((sortOption.SortDirection ?? SortDirection.Asc) == SortDirection.Desc)
 			{
-				equipments.Reverse();
+				viewModels.Reverse();
 			}
 		}
 
@@ -217,6 +222,5 @@ namespace AppStudio.EquipmentModule.ViewModels
 				viewModel.Power.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0 ||
 				viewModel.LastChecked.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0;
 		}
-
 	}
 }

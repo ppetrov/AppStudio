@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using AppCore;
 using AppCore.Data;
 using AppStudio;
@@ -107,30 +109,30 @@ namespace DemoClient
 					//Console.WriteLine();
 
 					buffer.Clear();
-					CodeGenerator.GenerateClass(buffer, table, projectConfig);
+					//CodeGenerator.GenerateClass(buffer, table, projectConfig);
+					//buffer.AppendLine();
+					//CodeGenerator.GenerateCaptionsClass(buffer, table, projectConfig);
+					//buffer.AppendLine();
+					//CodeGenerator.GenerateViewModel(buffer, table, projectConfig);
+					//buffer.AppendLine();
+					//CodeGenerator.GeneratePropertyEnum(buffer, table, projectConfig);
+					//buffer.AppendLine();
+					//CodeGenerator.GenerateParametersClass(buffer, table, projectConfig);
+					//buffer.AppendLine();
+					//CodeGenerator.GenerateSortOptionsArray(buffer, table, projectConfig);
+					//buffer.AppendLine();
+					//CodeGenerator.GenerateSortOptionsProperties(buffer, table, projectConfig);
+					//buffer.AppendLine();
+					//CodeGenerator.GenerateSortOptionsInitialization(buffer, table, projectConfig);
+					//buffer.AppendLine();
+					//CodeGenerator.GenerateIsTextMatchMethod(buffer, table, projectConfig);
+					//buffer.AppendLine();
+					CodeGenerator.GenerateSortMethod(buffer, table, projectConfig);
 					buffer.AppendLine();
-					CodeGenerator.GenerateCaptionsClass(buffer, table, projectConfig);
-					buffer.AppendLine();
-					CodeGenerator.GenerateViewModel(buffer, table, projectConfig);
-					buffer.AppendLine();
-					CodeGenerator.GeneratePropertyEnum(buffer, table, projectConfig);
-					Console.WriteLine(buffer.ToString());
-					CodeGenerator.GenerateParametersClass(buffer, table, projectConfig);
-					Console.WriteLine(buffer.ToString());
-					CodeGenerator.GenerateSortOptionsArray(buffer, table, projectConfig);
-					Console.WriteLine(buffer.ToString());
-					CodeGenerator.GenerateSortOptionsProperties(buffer, table, projectConfig);
-					Console.WriteLine(buffer.ToString());
-					CodeGenerator.GenerateSortOptionsInitialization(buffer, table, projectConfig);
-					Console.WriteLine(buffer.ToString());
-					CodeGenerator.GenerateIsTextMatchMethod(buffer, table, projectConfig);
-					Console.WriteLine(buffer.ToString());
-
-
-
 
 
 					Console.WriteLine();
+					Console.WriteLine(buffer.ToString());
 
 					classes.AppendLine(buffer.ToString());
 
@@ -186,8 +188,6 @@ namespace DemoClient
 			var data = dataProvider.ToString();
 			//Console.WriteLine(code.Length);
 			//Console.WriteLine(data.Length);
-
-			Console.WriteLine(code);
 
 			foreach (var s in register.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries))
 			{
