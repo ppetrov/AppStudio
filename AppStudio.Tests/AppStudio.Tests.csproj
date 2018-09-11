@@ -15,4 +15,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\AppStudio\AppStudio.csproj" />
+  </ItemGroup>
+
 </Project>
