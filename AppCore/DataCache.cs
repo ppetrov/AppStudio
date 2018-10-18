@@ -1,16 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using AppCore.Data;
 
 namespace AppCore
 {
+	/// <summary>
+	/// Collection of all the cached data in the application
+	/// </summary>
 	public sealed class DataCache
 	{
 		private Dictionary<string, object> Data { get; } = new Dictionary<string, object>();
 		private Dictionary<string, object> DataProviders { get; } = new Dictionary<string, object>();
 
+		/// <summary>
+		/// Indicates whether or not to use the cache.
+		/// </summary>
+		public bool IsEnabled { get; set; } = true;
+
+		/// <summary>
+		/// Register a data provider
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="dataProvider"></param>
 		public void Register<T>(Func<IDbContext, DataCache, Dictionary<long, T>> dataProvider)
 		{
 			if (dataProvider == null) throw new ArgumentNullException(nameof(dataProvider));
@@ -20,23 +32,40 @@ namespace AppCore
 			this.DataProviders.Add(key, dataProvider);
 		}
 
+		/// <summary>
+		/// Get the data from the cache or load it from the respective data provider.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="dbContext"></param>
+		/// <returns></returns>
 		public ReadOnlyDictionary<long, T> GetData<T>(IDbContext dbContext)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
 
 			var key = typeof(T).FullName;
 
-			if (!this.Data.TryGetValue(key, out var values))
+			Dictionary<long, T> data;
+
+			if (this.IsEnabled)
 			{
-				Debug.WriteLine(@"Get data from the database for type:" + key);
-				var dataProvider = this.DataProviders[key] as Func<IDbContext, DataCache, Dictionary<long, T>>;
-				values = dataProvider(dbContext, this);
-				this.Data.Add(key, values);
+				if (!this.Data.TryGetValue(key, out var cachedData))
+				{
+					cachedData = (this.DataProviders[key] as Func<IDbContext, DataCache, Dictionary<long, T>>)(dbContext, this);
+					this.Data.Add(key, cachedData);
+				}
+				data = (Dictionary<long, T>)cachedData;
+			}
+			else
+			{
+				data = (this.DataProviders[key] as Func<IDbContext, DataCache, Dictionary<long, T>>)(dbContext, this);
 			}
 
-			return new ReadOnlyDictionary<long, T>(values as Dictionary<long, T>);
+			return new ReadOnlyDictionary<long, T>(data);
 		}
 
+		/// <summary>
+		/// Clear the data from the cache
+		/// </summary>
 		public void Clear()
 		{
 			this.Data.Clear();
