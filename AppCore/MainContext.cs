@@ -1,33 +1,48 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using AppCore.Data;
 using AppCore.Features;
 using AppCore.Localization;
 using AppCore.Logs;
-using AppCore.Sort;
 
 namespace AppCore
 {
+	/// <summary>
+	/// Collection of all the services needed for the application - resolve services, feature tracking, caching, localization
+	/// </summary>
 	public sealed class MainContext
 	{
 		private ServiceLocator ServiceLocator { get; } = new ServiceLocator();
 		private FeatureManager FeatureManager { get; } = new FeatureManager();
-		public DataCache DataCache { get; } = new DataCache();
-		public LocalizationManager LocalizationManager { get; } = new LocalizationManager();
+		private DataCache DataCache { get; } = new DataCache();
+		private LocalizationManager LocalizationManager { get; } = new LocalizationManager();
 
-		public void Log(Exception exception)
-		{
-			if (exception == null) throw new ArgumentNullException(nameof(exception));
-
-			this.GetService<ILogger>().Log(exception.ToString(), LogLevel.Error);
-		}
-
+		/// <summary>
+		/// Helper method to get the registered service
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <returns></returns>
 		public T GetService<T>() where T : class
 		{
 			return this.ServiceLocator.GetService<T>();
 		}
 
+		/// <summary>
+		/// Helper method to log the exception
+		/// </summary>
+		/// <param name="exception"></param>
+		public void Log(Exception exception)
+		{
+			if (exception == null) throw new ArgumentNullException(nameof(exception));
+
+			this.GetService<Action<string, LogLevel>>()(exception.ToString(), LogLevel.Error);
+		}
+
+		/// <summary>
+		/// Helper method to register a service
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="service"></param>
 		public void RegisterService<T>(T service) where T : class
 		{
 			if (service == null) throw new ArgumentNullException(nameof(service));
@@ -35,6 +50,11 @@ namespace AppCore
 			this.ServiceLocator.Register(service);
 		}
 
+		/// <summary>
+		/// Helper method to register a service creator
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="serviceCreator"></param>
 		public void RegisterServiceCreator<T>(Func<T> serviceCreator) where T : class
 		{
 			if (serviceCreator == null) throw new ArgumentNullException(nameof(serviceCreator));
@@ -42,6 +62,10 @@ namespace AppCore
 			this.ServiceLocator.RegisterCreator(serviceCreator);
 		}
 
+		/// <summary>
+		/// Helper method to save the feature
+		/// </summary>
+		/// <param name="feature"></param>
 		public void Save(Feature feature)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
@@ -49,6 +73,11 @@ namespace AppCore
 			this.FeatureManager.Save(this.GetService<IFeatureDataAdapter>(), feature);
 		}
 
+		/// <summary>
+		/// Helper method to save the feature and it's exception
+		/// </summary>
+		/// <param name="feature"></param>
+		/// <param name="exception"></param>
 		public void Save(Feature feature, Exception exception)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
@@ -57,38 +86,29 @@ namespace AppCore
 			this.FeatureManager.Save(this.GetService<IFeatureDataAdapter>(), feature, exception);
 		}
 
-		public ReadOnlyDictionary<long, T> GetDataFromCache<T>(IDbContext dbContext)
+		/// <summary>
+		/// Helper method to get the data from the cache or load it from the data provider
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="dbContext"></param>
+		/// <returns></returns>
+		public ReadOnlyDictionary<long, T> GetData<T>(IDbContext dbContext)
 		{
 			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
 
 			return this.DataCache.GetData<T>(dbContext);
 		}
 
-		public void BeginInvokeOnMainThread(Action action)
+		/// <summary>
+		/// Helper method to get the localized contents for the given key
+		/// </summary>
+		/// <param name="key"></param>
+		/// <returns></returns>
+		public string GetLocal(string key)
 		{
-			if (action == null) throw new ArgumentNullException(nameof(action));
+			if (key == null) throw new ArgumentNullException(nameof(key));
 
-			try
-			{
-				action();
-			}
-			catch (Exception ex)
-			{
-				this.Log(ex);
-			}
-		}
-
-		public void SelectSortOption(SortOption[] sortOptions, Action<SortOption> applySort)
-		{
-			if (sortOptions == null) throw new ArgumentNullException(nameof(sortOptions));
-
-			// TODO : !!! Display Sort Options selector
-			Action _ = () =>
-			{
-				// TODO : !!!
-				applySort(default(SortOption));
-			};
-			_();
+			return this.LocalizationManager.GetLocal(key);
 		}
 	}
 }

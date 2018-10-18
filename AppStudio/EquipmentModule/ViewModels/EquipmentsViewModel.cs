@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Windows.Input;
 using AppCore;
 using AppCore.Features;
-using AppCore.Localization;
 using AppCore.Sort;
 using AppCore.ViewModels;
 using AppStudio.EquipmentModule.Models;
@@ -78,15 +77,13 @@ namespace AppStudio.EquipmentModule.ViewModels
 
 		public EquipmentsViewModel(MainContext mainContext) : base(mainContext)
 		{
-			var localization = this.MainContext.GetService<LocalizationManager>();
-
-			this.SearchHint = localization.GetMessage(string.Empty);
+			this.SearchHint = this.MainContext.GetLocal(string.Empty);
 
 			// TODO : Generate this method
 			//var captions = new EquipmentCaptions(serialNumberCaption, powerCaption, lastCheckedCaption);
-			this.SerialNumberOption = new SortOption(localization.GetMessage(nameof(EquipmentProperty.SerialNumber)), EquipmentProperty.SerialNumber);
-			this.PowerOption = new SortOption(localization.GetMessage(nameof(EquipmentProperty.Power)), EquipmentProperty.Power);
-			this.LastCheckedOption = new SortOption(localization.GetMessage(nameof(EquipmentProperty.LastChecked)), EquipmentProperty.LastChecked);
+			this.SerialNumberOption = new SortOption(this.MainContext.GetLocal(nameof(EquipmentProperty.SerialNumber)), EquipmentProperty.SerialNumber);
+			this.PowerOption = new SortOption(this.MainContext.GetLocal(nameof(EquipmentProperty.Power)), EquipmentProperty.Power);
+			this.LastCheckedOption = new SortOption(this.MainContext.GetLocal(nameof(EquipmentProperty.LastChecked)), EquipmentProperty.LastChecked);
 			this.Captions = new EquipmentCaptions("", "", "");
 
 			this.ClearSearchCommand = new Command(this.ClearSearch);
@@ -120,7 +117,7 @@ namespace AppStudio.EquipmentModule.ViewModels
 			{
 				this.MainContext.Save(feature);
 
-				this.MainContext.SelectSortOption(this.SortOptions, this.ApplySort);
+				//this.MainContext.SelectSortOption(this.SortOptions, this.ApplySort);
 			}
 			catch (Exception ex)
 			{

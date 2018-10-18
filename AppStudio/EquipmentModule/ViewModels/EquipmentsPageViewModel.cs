@@ -31,21 +31,19 @@ namespace AppStudio.EquipmentModule.ViewModels
 						.GetEquipments(this.MainContext)
 						.Select(v => new EquipmentViewModel(v, this.ViewModel.Captions));
 
-					this.MainContext.BeginInvokeOnMainThread(() =>
+					// TODO : !!! Marshal to the UI Thread
+					try
 					{
-						try
-						{
-							this.ViewModel.LoadData(viewModels);
-						}
-						catch (Exception ex)
-						{
-							this.MainContext.Log(ex);
-						}
-						finally
-						{
-							this.IsBusy = false;
-						}
-					});
+						this.ViewModel.LoadData(viewModels);
+					}
+					catch (Exception ex)
+					{
+						this.MainContext.Log(ex);
+					}
+					finally
+					{
+						this.IsBusy = false;
+					}
 				}
 				catch (Exception ex)
 				{
