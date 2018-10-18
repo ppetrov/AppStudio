@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using AppCore.Data;
 
-namespace AppCore
+namespace AppCore.Cache
 {
 	/// <summary>
 	/// Collection of all the cached data in the application

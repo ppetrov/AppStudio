@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Input;
 
-namespace AppCore
+namespace AppStudio
 {
 	public sealed class Command : ICommand
 	{

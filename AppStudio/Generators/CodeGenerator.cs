@@ -641,7 +641,7 @@ return cmp;
 								buffer.Append(modelName);
 								buffer.Append(@".");
 								buffer.Append(property.Name);
-								buffer.Append(@".Value.ToString(@""dd MMM yyyy"") : GetValue(string.Empty);");
+								buffer.Append(@".Value.ToString(@""dd MMM yyyy"") : GetDisplayValue(string.Empty);");
 							}
 							else
 							{

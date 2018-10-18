@@ -60,6 +60,8 @@ namespace AppStudio.EquipmentModule.ViewModels
 				};
 			}
 		}
+
+		// For headers of a Grid
 		public SortOption SerialNumberOption { get; }
 		public SortOption PowerOption { get; }
 		public SortOption LastCheckedOption { get; }
@@ -166,7 +168,7 @@ namespace AppStudio.EquipmentModule.ViewModels
 				}
 			}
 
-			var property = (EquipmentProperty)sortOption.Data;
+			var property = (EquipmentProperty)sortOption.Property;
 			Sort(this.Equipments, default(SortOption), property);
 			Sort(this.CurrentEquipments, default(SortOption), property);
 

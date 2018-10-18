@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using AppCore.Cache;
 using AppCore.Data;
 using AppCore.Features;
 using AppCore.Localization;
 using AppCore.Logs;
+using AppCore.Services;
 
 namespace AppCore
 {

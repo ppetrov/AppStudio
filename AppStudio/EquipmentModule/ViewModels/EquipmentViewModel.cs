@@ -25,7 +25,7 @@ namespace AppStudio.EquipmentModule.ViewModels
 			this.SerialNumberCaption = captions.SerialNumber;
 			this.Power = model.Power.ToString(@"F2");
 			this.PowerCaption = captions.Power;
-			this.LastChecked = model.LastChecked.HasValue ? model.LastChecked.Value.ToString(@"dd MMM yyyy") : GetValue(string.Empty);;
+			this.LastChecked = model.LastChecked.HasValue ? model.LastChecked.Value.ToString(@"dd MMM yyyy") : GetDisplayValue(string.Empty);;
 			this.LastCheckedCaption = captions.LastChecked;
 		}
 	}

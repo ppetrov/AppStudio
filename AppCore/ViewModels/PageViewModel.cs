@@ -2,6 +2,9 @@
 
 namespace AppCore.ViewModels
 {
+	/// <summary>
+	/// Defines the base class for all page view models with title support, busy support and load data
+	/// </summary>
 	public abstract class PageViewModel : ViewModel
 	{
 		public MainContext MainContext { get; }
@@ -27,6 +30,10 @@ namespace AppCore.ViewModels
 			this.MainContext = mainContext;
 		}
 
+		/// <summary>
+		/// Load data for the given parameter
+		/// </summary>
+		/// <param name="parameter"></param>
 		public virtual void LoadData(object parameter)
 		{
 		}
