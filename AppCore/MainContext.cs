@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using AppCore.Data;
 using AppCore.Features;
+using AppCore.Localization;
 using AppCore.Logs;
 using AppCore.Sort;
 
@@ -10,8 +12,16 @@ namespace AppCore
 	public sealed class MainContext
 	{
 		private ServiceLocator ServiceLocator { get; } = new ServiceLocator();
-		public FeatureManager FeatureManager { get; } = new FeatureManager();
+		private FeatureManager FeatureManager { get; } = new FeatureManager();
 		public DataCache DataCache { get; } = new DataCache();
+		public LocalizationManager LocalizationManager { get; } = new LocalizationManager();
+
+		public void Log(Exception exception)
+		{
+			if (exception == null) throw new ArgumentNullException(nameof(exception));
+
+			this.GetService<ILogger>().Log(exception.ToString(), LogLevel.Error);
+		}
 
 		public T GetService<T>() where T : class
 		{
@@ -32,13 +42,6 @@ namespace AppCore
 			this.ServiceLocator.RegisterCreator(serviceCreator);
 		}
 
-		public Dictionary<long, T> GetDataFromCache<T>(IDbContext dbContext)
-		{
-			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
-
-			return this.DataCache.GetData<T>(dbContext);
-		}
-
 		public void Save(Feature feature)
 		{
 			if (feature == null) throw new ArgumentNullException(nameof(feature));
@@ -54,11 +57,11 @@ namespace AppCore
 			this.FeatureManager.Save(this.GetService<IFeatureDataAdapter>(), feature, exception);
 		}
 
-		public void Log(Exception exception)
+		public ReadOnlyDictionary<long, T> GetDataFromCache<T>(IDbContext dbContext)
 		{
-			if (exception == null) throw new ArgumentNullException(nameof(exception));
+			if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
 
-			this.GetService<ILogger>().Log(exception.ToString(), LogLevel.Error);
+			return this.DataCache.GetData<T>(dbContext);
 		}
 
 		public void BeginInvokeOnMainThread(Action action)

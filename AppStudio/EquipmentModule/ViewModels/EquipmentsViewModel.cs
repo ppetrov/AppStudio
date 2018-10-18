@@ -78,15 +78,15 @@ namespace AppStudio.EquipmentModule.ViewModels
 
 		public EquipmentsViewModel(MainContext mainContext) : base(mainContext)
 		{
-			var localization = this.MainContext.GetService<ILocalization>();
+			var localization = this.MainContext.GetService<LocalizationManager>();
 
-			this.SearchHint = localization.GetValue(string.Empty);
+			this.SearchHint = localization.GetMessage(string.Empty);
 
 			// TODO : Generate this method
 			//var captions = new EquipmentCaptions(serialNumberCaption, powerCaption, lastCheckedCaption);
-			this.SerialNumberOption = new SortOption(localization.GetValue(nameof(EquipmentProperty.SerialNumber)), EquipmentProperty.SerialNumber);
-			this.PowerOption = new SortOption(localization.GetValue(nameof(EquipmentProperty.Power)), EquipmentProperty.Power);
-			this.LastCheckedOption = new SortOption(localization.GetValue(nameof(EquipmentProperty.LastChecked)), EquipmentProperty.LastChecked);
+			this.SerialNumberOption = new SortOption(localization.GetMessage(nameof(EquipmentProperty.SerialNumber)), EquipmentProperty.SerialNumber);
+			this.PowerOption = new SortOption(localization.GetMessage(nameof(EquipmentProperty.Power)), EquipmentProperty.Power);
+			this.LastCheckedOption = new SortOption(localization.GetMessage(nameof(EquipmentProperty.LastChecked)), EquipmentProperty.LastChecked);
 			this.Captions = new EquipmentCaptions("", "", "");
 
 			this.ClearSearchCommand = new Command(this.ClearSearch);

@@ -3,12 +3,14 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AppCore;
 using AppCore.Data;
+using AppCore.Localization;
 using AppStudio;
 using AppStudio.Config;
 using AppStudio.Data;
@@ -23,6 +25,13 @@ namespace DemoClient
 
 		static void Main(string[] args)
 		{
+			var sl = new ServiceLocator();
+			
+			
+			//GenerateObjectDumper();
+			return;
+			//CheckAllPages();
+			//return;
 			//Generate();
 			//return;
 
@@ -221,6 +230,104 @@ namespace DemoClient
 			//}}
 			//", data));
 
+		}
+
+		private static void GenerateObjectDumper()
+		{
+			var input = @"
+
+short Prob2Temparature
+
+short Prob1Temparature
+
+bool PowerStatus
+
+NSNumber MovementTime
+
+NSNumber ModuleActivity
+
+NSNumber LastErrorTime
+
+float Humidity
+
+kEventType EventType
+
+NSNumber EventTime
+
+NSNumber EventID
+
+float EvaporatorTemparature
+
+int ErrorCode
+
+bool DoorStatus
+
+bool DoorOperationTimeOut
+
+NSNumber DoorOpenTime
+
+int DoorOpenDuration
+
+NSDictionary DictDetailParams
+
+NSDictionary DictData
+
+float CoolerVoltage
+
+float CondensorTemparature
+
+int BatteryLevel
+
+int AmbientLight
+
+NSNumber ActivityData
+
+NSNumber SerialNumber
+
+float Temparature
+".Trim();
+
+			var lines = input.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)
+				.Select(v => v.Trim())
+				.Where(v => !string.IsNullOrWhiteSpace(v))
+				.ToList();
+
+			var result = "";
+
+			foreach (var line in lines)
+			{
+				var s = line.IndexOf(' ');
+				var name = line.Substring(s + 1);
+
+
+				//buffer.Append(@"Name:");
+				//buffer.AppendLine(data.Description);
+
+				result += $@"buffer.Append(@""{name}:"");" + Environment.NewLine;
+				result += $@"buffer.AppendLine(Convert.ToString(data.{name}));" + Environment.NewLine;
+			}
+
+		}
+
+		private static void CheckAllPages()
+		{
+			var folder = @"C:\Cchbc\PhoenixClient\iFSAXamarin\iFSA.MultiPlateform\iFSA.MultiPlateform";
+			foreach (var file in Directory.GetFiles(folder, @"*.xaml", SearchOption.AllDirectories))
+			{
+				var contents = File.ReadAllText(file);
+				var flag = @"<ContentPage";
+				var startIndex = contents.IndexOf(flag, StringComparison.OrdinalIgnoreCase);
+				if (startIndex >= 0)
+				{
+					var endIndex = contents.IndexOf(@">", startIndex + flag.Length + 1, StringComparison.OrdinalIgnoreCase);
+					var definition = contents.Substring(startIndex, endIndex - startIndex + 1);
+					if (definition.IndexOf("Padding", StringComparison.OrdinalIgnoreCase) < 0)
+					{
+						Console.WriteLine(Path.GetFileName(file));
+						break;
+					}
+				}
+			}
 		}
 
 		private static void Generate()
