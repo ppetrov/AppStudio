@@ -2,6 +2,9 @@
 
 namespace AppCore.Data
 {
+	/// <summary>
+	/// Defines a parameter for SQL query
+	/// </summary>
 	public sealed class QueryParameter
 	{
 		public string Name { get; }

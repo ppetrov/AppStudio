@@ -3,6 +3,10 @@ using System.Linq;
 
 namespace AppCore.Data
 {
+	/// <summary>
+	/// Defines a wrapper for SQL query for the "T" object
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
 	public sealed class Query<T>
 	{
 		public string Statement { get; }
@@ -20,6 +24,9 @@ namespace AppCore.Data
 		}
 	}
 
+	/// <summary>
+	/// Defines a wrapper for SQL query
+	/// </summary>
 	public sealed class Query
 	{
 		public string Statement { get; }
