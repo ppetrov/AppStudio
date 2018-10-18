@@ -2,6 +2,9 @@
 
 namespace AppCore.Features
 {
+	/// <summary>
+	/// Defines a feature(some usage of the application) like button's clicks
+	/// </summary>
 	public sealed class Feature
 	{
 		public string Context { get; }
