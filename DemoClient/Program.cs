@@ -58,7 +58,7 @@ namespace DemoClient
 			{
 				//using (var localCtx = new DbContext(cnString))
 				//{
-				//	var eqs = EquipmentDataProvider.GetEquipments(localCtx, new EquipmentsParameters(DateTime.Today));
+				//	var eqs = EquipmentManager.GetEquipments(localCtx, new EquipmentsParameters(DateTime.Today));
 				//	foreach (var e in eqs)
 				//	{
 				//		Console.WriteLine(e);

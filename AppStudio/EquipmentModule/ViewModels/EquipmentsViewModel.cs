@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using AppCore;
+using AppCore.Dialog;
 using AppCore.Features;
 using AppCore.Sort;
 using AppCore.ViewModels;
@@ -13,6 +16,7 @@ namespace AppStudio.EquipmentModule.ViewModels
 	// Multiple of Type
 	public sealed class EquipmentsViewModel : PageViewModel
 	{
+		private EquipmentManager Manager { get; set; }
 		private List<EquipmentViewModel> Equipments { get; } = new List<EquipmentViewModel>();
 
 		public string SearchHint { get; }
@@ -61,7 +65,6 @@ namespace AppStudio.EquipmentModule.ViewModels
 			}
 		}
 
-		// For headers of a Grid
 		public SortOption SerialNumberOption { get; }
 		public SortOption PowerOption { get; }
 		public SortOption LastCheckedOption { get; }
@@ -75,7 +78,7 @@ namespace AppStudio.EquipmentModule.ViewModels
 			set { this.SetProperty(ref _currentEquipments, value); }
 		}
 
-		public EquipmentCaptions Captions { get; }
+		private EquipmentCaptions Captions { get; }
 
 		public EquipmentsViewModel(MainContext mainContext) : base(mainContext)
 		{
@@ -88,28 +91,103 @@ namespace AppStudio.EquipmentModule.ViewModels
 			this.LastCheckedOption = new SortOption(this.MainContext.GetLocal(nameof(EquipmentProperty.LastChecked)), EquipmentProperty.LastChecked);
 			this.Captions = new EquipmentCaptions("", "", "");
 
-			this.ClearSearchCommand = new Command(this.ClearSearch);
+			//this.ClearSearchCommand = new Command(this.ClearSearch);
 
-			this.SelectSortOptionCommand = new Command(this.SelectSortOption);
+			//this.SelectSortOptionCommand = new Command(this.SelectSortOption);
 		}
 
 		public override void LoadData(object parameter)
 		{
 			if (parameter == null) throw new ArgumentNullException(nameof(parameter));
 
+			this.IsBusy = true;
 			try
 			{
-				var viewModels = parameter as IEnumerable<EquipmentViewModel>;
+				this.Manager = parameter as EquipmentManager;
 
-				this.Equipments.Clear();
-				this.Equipments.AddRange(viewModels);
-
-				this.ApplyTextSearch();
+				Task.Run(() =>
+				{
+					try
+					{
+						this.Equipments.Clear();
+						foreach (var equipment in this.Manager.GetEquipments())
+						{
+							this.Equipments.Add(new EquipmentViewModel(equipment, this.Captions));
+						}
+					}
+					catch (Exception ex)
+					{
+						this.MainContext.Log(ex);
+					}
+					finally
+					{
+						// TODO : !!!!
+						// Invoke on the main thread
+						{
+							this.IsBusy = false;
+							this.DisplayData();
+						};
+					}
+				});
 			}
 			catch (Exception ex)
 			{
 				this.MainContext.Log(ex);
 			}
+		}
+
+		public async void Add()
+		{
+			try
+			{
+				var equipment = await this.Manager.AddAsync(default(Equipment));
+				if (equipment != null)
+				{
+					this.Equipments.Add(new EquipmentViewModel(equipment, this.Captions));
+
+					this.DisplayData();
+				}
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.Log(ex);
+			}
+		}
+
+		private async Task Delete()
+		{
+			var feature = new Feature(nameof(EquipmentsViewModel), nameof(this.Delete));
+			try
+			{
+				this.MainContext.Save(feature);
+
+				// TODO : !!!
+				var viewModel = this.Equipments[0];
+
+				var confirmation = await this.MainContext.GetService<IDialogManager>().ConfirmAsync(@"Confirm delete equipment?", ConfirmationType.YesNo);
+				if (confirmation == ConfirmationResult.Accept)
+				{
+					if (await this.Manager.DeleteAsync(viewModel.Model))
+					{
+						this.Equipments.Remove(viewModel);
+
+						this.DisplayData(false);
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.Save(feature, ex);
+			}
+		}
+
+		private void DisplayData(bool sort = true)
+		{
+			if (sort)
+			{
+				this.Sort();
+			}
+			this.ApplyTextSearch();
 		}
 
 		private void SelectSortOption()
@@ -158,6 +236,23 @@ namespace AppStudio.EquipmentModule.ViewModels
 			this.CurrentEquipments = matches;
 		}
 
+		private void Sort()
+		{
+			var sortOption = this.SortOptions.FirstOrDefault(s => s.SortDirection.HasValue) ??
+							 this.SortOptions.FirstOrDefault();
+			if (sortOption != null)
+			{
+				this.Sort(sortOption);
+			}
+		}
+
+		private void Sort(SortOption sortOption)
+		{
+			var property = (EquipmentProperty)sortOption.Property;
+			Sort(this.Equipments, default(SortOption), property);
+			Sort(this.CurrentEquipments, default(SortOption), property);
+		}
+
 		private void ApplySort(SortOption sortOption)
 		{
 			foreach (var option in this.SortOptions)
@@ -168,9 +263,7 @@ namespace AppStudio.EquipmentModule.ViewModels
 				}
 			}
 
-			var property = (EquipmentProperty)sortOption.Property;
-			Sort(this.Equipments, default(SortOption), property);
-			Sort(this.CurrentEquipments, default(SortOption), property);
+			this.Sort(sortOption);
 
 			this.CurrentEquipments = new List<EquipmentViewModel>(this.CurrentEquipments);
 		}

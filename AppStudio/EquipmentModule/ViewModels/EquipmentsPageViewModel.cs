@@ -1,6 +1,4 @@
 using System;
-using System.Linq;
-using System.Threading.Tasks;
 using AppCore;
 using AppCore.ViewModels;
 using AppStudio.EquipmentModule.Models;
@@ -16,40 +14,22 @@ namespace AppStudio.EquipmentModule.ViewModels
 		{
 			if (mainContext == null) throw new ArgumentNullException(nameof(mainContext));
 
+			// Register = OK
+			//this.MainContext.RegisterServiceCreator(() => new EquipmentManager(this.MainContext));
+
 			this.ViewModel = new EquipmentsViewModel(mainContext);
 		}
 
 		public override void LoadData(object parameter)
 		{
-			this.IsBusy = true;
-
-			Task.Run(() =>
+			try
 			{
-				try
-				{
-					var viewModels = EquipmentDataProvider
-						.GetEquipments(this.MainContext)
-						.Select(v => new EquipmentViewModel(v, this.ViewModel.Captions));
-
-					// TODO : !!! Marshal to the UI Thread
-					try
-					{
-						this.ViewModel.LoadData(viewModels);
-					}
-					catch (Exception ex)
-					{
-						this.MainContext.Log(ex);
-					}
-					finally
-					{
-						this.IsBusy = false;
-					}
-				}
-				catch (Exception ex)
-				{
-					this.MainContext.Log(ex);
-				}
-			});
+				this.ViewModel.LoadData(this.MainContext.GetService<EquipmentManager>());
+			}
+			catch (Exception ex)
+			{
+				this.MainContext.Log(ex);
+			}
 		}
 	}
 }
