@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using AppCore.Localization;
 
 namespace AppCore.Dialog
 {
@@ -12,7 +13,7 @@ namespace AppCore.Dialog
 		/// </summary>
 		/// <param name="message"></param>
 		/// <returns></returns>
-		Task DisplayAsync(string message);
+		Task DisplayAsync(LocalMessage message);
 
 		/// <summary>
 		/// Confirms the message
@@ -20,6 +21,6 @@ namespace AppCore.Dialog
 		/// <param name="message"></param>
 		/// <param name="confirmationType"></param>
 		/// <returns></returns>
-		Task<ConfirmationResult> ConfirmAsync(string message, ConfirmationType confirmationType);
+		Task<ConfirmationResult> ConfirmAsync(LocalMessage message, ConfirmationType confirmationType);
 	}
 }

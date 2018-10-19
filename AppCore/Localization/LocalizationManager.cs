@@ -8,20 +8,20 @@ namespace AppCore.Localization
 	/// </summary>
 	public sealed class LocalizationManager
 	{
-		private Dictionary<string, string> Values { get; } = new Dictionary<string, string>();
+		private Dictionary<string, LocalMessage> Values { get; } = new Dictionary<string, LocalMessage>();
 
 		/// <summary>
 		/// Gets the localized contents for the given key
 		/// </summary>
 		/// <param name="key"></param>
 		/// <returns></returns>
-		public string GetLocal(string key)
+		public LocalMessage GetLocalMessage(string key)
 		{
 			if (key == null) throw new ArgumentNullException(nameof(key));
 
 			this.Values.TryGetValue(key, out var value);
 
-			return value ?? string.Empty;
+			return value ?? LocalMessage.Empty;
 		}
 
 		/// <summary>
@@ -35,7 +35,7 @@ namespace AppCore.Localization
 			this.Values.Clear();
 			foreach (var kv in values)
 			{
-				this.Values.TryAdd(kv.Key, kv.Value);
+				this.Values.TryAdd(kv.Key, new LocalMessage(kv.Value));
 			}
 		}
 	}

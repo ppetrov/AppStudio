@@ -42,10 +42,7 @@ namespace AppStudio.EquipmentModule.Models
 				// Validation & confirmation
 				if (string.IsNullOrWhiteSpace(equipment.SerialNumber))
 				{
-					var dialog = this.MainContext.GetService<IDialogManager>();
-					var local = this.MainContext.GetLocal(@"Missing serial number");
-					await dialog.DisplayAsync(local);
-
+					await this.MainContext.DisplayAsync(@"Missing serial number");
 					return null;
 				}
 
@@ -61,9 +58,7 @@ namespace AppStudio.EquipmentModule.Models
 
 				if (equipments.Exists(e => e.SerialNumber == serialNumber))
 				{
-					var dialog = this.MainContext.GetService<IDialogManager>();
-					var local = this.MainContext.GetLocal(@"Exists");
-					await dialog.DisplayAsync(local);
+					await this.MainContext.DisplayAsync(@"Exists");
 
 					return null;
 				}
@@ -74,9 +69,7 @@ namespace AppStudio.EquipmentModule.Models
 
 				if (equipment.Power > warningEquipmentPower)
 				{
-					var dialog = this.MainContext.GetService<IDialogManager>();
-					var local = this.MainContext.GetLocal(@"Confirm BIG power");
-					var confirmation = await dialog.ConfirmAsync(local, ConfirmationType.YesNo);
+					var confirmation = await this.MainContext.ConfirmAsync(@"Confirm BIG power", ConfirmationType.YesNo);
 					if (confirmation != ConfirmationResult.Accept)
 					{
 						return null;
@@ -99,9 +92,7 @@ namespace AppStudio.EquipmentModule.Models
 			{
 				if (!equipment.LastChecked.HasValue)
 				{
-					var dialog = this.MainContext.GetService<IDialogManager>();
-					var local = this.MainContext.GetLocal(@"N/A");
-					await dialog.DisplayAsync(local);
+					await this.MainContext.DisplayAsync(@"N/A");
 					return false;
 				}
 
@@ -109,7 +100,7 @@ namespace AppStudio.EquipmentModule.Models
 				{
 					var dialog = this.MainContext.GetService<IDialogManager>();
 					var local = this.MainContext.GetLocal(@"Confirm BIG power");
-					var confirmation = await dialog.ConfirmAsync(local, ConfirmationType.YesNo);
+					var confirmation = await this.MainContext.ConfirmAsync(local, ConfirmationType.YesNo);
 					if (confirmation != ConfirmationResult.Accept)
 					{
 						return false;

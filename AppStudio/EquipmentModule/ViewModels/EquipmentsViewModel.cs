@@ -164,7 +164,7 @@ namespace AppStudio.EquipmentModule.ViewModels
 				// TODO : !!!
 				var viewModel = this.Equipments[0];
 
-				var confirmation = await this.MainContext.GetService<IDialogManager>().ConfirmAsync(@"Confirm delete equipment?", ConfirmationType.YesNo);
+				var confirmation = await this.MainContext.ConfirmAsync(@"Confirm delete equipment?", ConfirmationType.YesNo);
 				if (confirmation == ConfirmationResult.Accept)
 				{
 					if (await this.Manager.DeleteAsync(viewModel.Model))

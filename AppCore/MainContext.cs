@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using AppCore.Cache;
 using AppCore.Data;
+using AppCore.Dialog;
 using AppCore.Features;
 using AppCore.Localization;
 using AppCore.Logs;
@@ -110,7 +112,32 @@ namespace AppCore
 		{
 			if (key == null) throw new ArgumentNullException(nameof(key));
 
-			return this.LocalizationManager.GetLocal(key);
+			return this.LocalizationManager.GetLocalMessage(key).Contents;
+		}
+
+		/// <summary>
+		/// Display a localized message
+		/// </summary>
+		/// <param name="localizationKey"></param>
+		/// <returns></returns>
+		public Task DisplayAsync(string localizationKey)
+		{
+			if (localizationKey == null) throw new ArgumentNullException(nameof(localizationKey));
+
+			return this.GetService<IDialogManager>().DisplayAsync(this.LocalizationManager.GetLocalMessage(localizationKey));
+		}
+
+		/// <summary>
+		/// Confirm a localized message
+		/// </summary>
+		/// <param name="localizationKey"></param>
+		/// <param name="confirmationType"></param>
+		/// <returns></returns>
+		public Task<ConfirmationResult> ConfirmAsync(string localizationKey, ConfirmationType confirmationType)
+		{
+			if (localizationKey == null) throw new ArgumentNullException(nameof(localizationKey));
+
+			return this.GetService<IDialogManager>().ConfirmAsync(this.LocalizationManager.GetLocalMessage(localizationKey), confirmationType);
 		}
 	}
 }
