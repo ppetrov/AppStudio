@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AppStudio.EquipmentModule.Models
+namespace AppClient.iFSA.BLL.Equipments
 {
 	// Complete
 	public sealed class Equipment

@@ -6,7 +6,7 @@ using AppClient.Core.Core;
 using AppClient.Core.Data;
 using AppClient.Core.Dialog;
 
-namespace AppStudio.EquipmentModule.Models
+namespace AppClient.iFSA.BLL.Equipments
 {
 	public sealed class EquipmentManager
 	{
