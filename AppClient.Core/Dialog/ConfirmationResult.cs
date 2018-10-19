@@ -1,4 +1,4 @@
-﻿namespace AppCore.Dialog
+﻿namespace AppClient.Core.Dialog
 {
 	public enum ConfirmationResult
 	{

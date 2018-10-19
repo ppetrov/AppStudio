@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AppCore.Features
+namespace AppClient.Core.Features
 {
 	/// <summary>
 	/// Defines a feature(some usage of the application) like button's clicks

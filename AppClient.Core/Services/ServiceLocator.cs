@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AppCore.Services
+namespace AppClient.Core.Services
 {
 	/// <summary>
 	/// Collection of all the services registered in the application

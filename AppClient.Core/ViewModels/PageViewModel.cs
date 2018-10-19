@@ -1,6 +1,7 @@
 ﻿using System;
+using AppClient.Core.Core;
 
-namespace AppCore.ViewModels
+namespace AppClient.Core.ViewModels
 {
 	/// <summary>
 	/// Defines the base class for all page view models with title support, busy support and load data

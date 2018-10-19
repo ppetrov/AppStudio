@@ -1,4 +1,4 @@
-﻿namespace AppCore.Sort
+﻿namespace AppClient.Core.Sort
 {
 	/// <summary>
 	/// Defines the sort direction

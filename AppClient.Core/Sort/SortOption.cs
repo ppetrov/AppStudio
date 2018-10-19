@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AppCore.Sort
+namespace AppClient.Core.Sort
 {
 	/// <summary>
 	/// Defines an option to sort a collection of items by given property

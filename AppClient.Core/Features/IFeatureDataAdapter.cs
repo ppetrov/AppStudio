@@ -1,4 +1,4 @@
-﻿namespace AppCore.Features
+﻿namespace AppClient.Core.Features
 {
 	/// <summary>
 	/// Defines where to save the feature and it's respective details

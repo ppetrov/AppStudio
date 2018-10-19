@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace AppCore.ViewModels
+namespace AppClient.Core.ViewModels
 {
 	/// <summary>
 	/// Defines the base class for all view models

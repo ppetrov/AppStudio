@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using AppCore.Cache;
-using AppCore.Data;
-using AppCore.Dialog;
-using AppCore.Features;
-using AppCore.Localization;
-using AppCore.Logs;
-using AppCore.Services;
+using AppClient.Core.Cache;
+using AppClient.Core.Data;
+using AppClient.Core.Dialog;
+using AppClient.Core.Features;
+using AppClient.Core.Localization;
+using AppClient.Core.Logs;
+using AppClient.Core.Services;
 
-namespace AppCore
+namespace AppClient.Core.Core
 {
 	/// <summary>
 	/// Collection of all the services needed for the application - resolve services, feature tracking, caching, localization

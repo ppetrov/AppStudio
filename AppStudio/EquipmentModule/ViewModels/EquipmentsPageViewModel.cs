@@ -1,6 +1,6 @@
 using System;
-using AppCore;
-using AppCore.ViewModels;
+using AppClient.Core.Core;
+using AppClient.Core.ViewModels;
 using AppStudio.EquipmentModule.Models;
 
 namespace AppStudio.EquipmentModule.ViewModels

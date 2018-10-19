@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AppCore.Data
+namespace AppClient.Core.Data
 {
 	/// <summary>
 	/// Defines an interface for executing SQL queries

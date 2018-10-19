@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using AppCore;
-using AppCore.Dialog;
-using AppCore.Features;
-using AppCore.Sort;
-using AppCore.ViewModels;
+using AppClient.Core.Core;
+using AppClient.Core.Dialog;
+using AppClient.Core.Features;
+using AppClient.Core.Sort;
+using AppClient.Core.ViewModels;
 using AppStudio.EquipmentModule.Models;
 
 namespace AppStudio.EquipmentModule.ViewModels

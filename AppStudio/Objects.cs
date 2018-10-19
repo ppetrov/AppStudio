@@ -1,5 +1,5 @@
 using System;
-using AppCore.ViewModels;
+using AppClient.Core.ViewModels;
 
 namespace AppStudio
 {

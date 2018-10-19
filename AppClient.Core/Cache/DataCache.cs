@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using AppCore.Data;
+using AppClient.Core.Data;
 
-namespace AppCore.Cache
+namespace AppClient.Core.Cache
 {
 	/// <summary>
 	/// Collection of all the cached data in the application

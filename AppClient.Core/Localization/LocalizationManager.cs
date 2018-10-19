@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace AppCore.Localization
+namespace AppClient.Core.Localization
 {
 	/// <summary>
 	/// Collection of all the localized messages in the application
@@ -25,7 +25,7 @@ namespace AppCore.Localization
 		}
 
 		/// <summary>
-		/// Load the localized contents. If the collection contains duplicate keys only the first one will be used.
+		/// Load the localized contents. If the collection contains duplicate keys the last one will be used.
 		/// </summary>
 		/// <param name="values"></param>
 		public void Load(IEnumerable<KeyValuePair<string, string>> values)
@@ -35,7 +35,7 @@ namespace AppCore.Localization
 			this.Values.Clear();
 			foreach (var kv in values)
 			{
-				this.Values.TryAdd(kv.Key, new LocalMessage(kv.Value));
+				this.Values[kv.Key] = new LocalMessage(kv.Value);
 			}
 		}
 	}

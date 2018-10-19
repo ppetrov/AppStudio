@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AppCore;
-using AppCore.Data;
-using AppCore.Dialog;
+using AppClient.Core.Core;
+using AppClient.Core.Data;
+using AppClient.Core.Dialog;
 
 namespace AppStudio.EquipmentModule.Models
 {

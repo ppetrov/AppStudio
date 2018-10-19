@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AppCore.Features
+namespace AppClient.Core.Features
 {
 	/// <summary>
 	/// Collection of all the services registered in the application

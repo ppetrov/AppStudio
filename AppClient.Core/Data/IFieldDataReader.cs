@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AppCore.Data
+namespace AppClient.Core.Data
 {
 	/// <summary>
 	/// Defines the interface for reading values from the database

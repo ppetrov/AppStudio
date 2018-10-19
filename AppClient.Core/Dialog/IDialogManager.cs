@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
-using AppCore.Localization;
+using AppClient.Core.Localization;
 
-namespace AppCore.Dialog
+namespace AppClient.Core.Dialog
 {
 	/// <summary>
 	/// Allow to display information messages or confirmation ones

@@ -1,4 +1,4 @@
-﻿namespace AppCore.Logs
+﻿namespace AppClient.Core.Logs
 {
 	/// <summary>
 	/// Defines the log levels

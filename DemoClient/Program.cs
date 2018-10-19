@@ -8,11 +8,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using AppCore;
-using AppCore.Cache;
-using AppCore.Data;
-using AppCore.Localization;
-using AppCore.Services;
+using AppClient.Core.Cache;
+using AppClient.Core.Services;
 using AppStudio;
 using AppStudio.Config;
 using AppStudio.Data;
@@ -28,8 +25,8 @@ namespace DemoClient
 		static void Main(string[] args)
 		{
 			var sl = new ServiceLocator();
-			
-			
+
+
 			//GenerateObjectDumper();
 			return;
 			//CheckAllPages();

@@ -1,6 +1,6 @@
 using System;
 
-namespace AppCore.Localization
+namespace AppClient.Core.Localization
 {
 	/// <summary>
 	/// Defines a localized message

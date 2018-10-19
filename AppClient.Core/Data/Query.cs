@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace AppCore.Data
+namespace AppClient.Core.Data
 {
 	/// <summary>
 	/// Defines a wrapper for SQL query for the "T" object

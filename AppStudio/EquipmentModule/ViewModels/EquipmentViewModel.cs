@@ -1,5 +1,5 @@
 ﻿using System;
-using AppCore.ViewModels;
+using AppClient.Core.ViewModels;
 using AppStudio.EquipmentModule.Models;
 
 namespace AppStudio.EquipmentModule.ViewModels
