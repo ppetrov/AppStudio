@@ -13,4 +13,10 @@
     <ProjectReference Include="..\AppStudio\AppStudio.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="AppClient.Core">
+      <HintPath>..\..\AppClient\AppClient.Core\bin\Debug\netstandard2.0\AppClient.Core.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
