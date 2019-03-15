@@ -32,12 +32,14 @@ namespace AppStudio.Config
 		{
 			if (filePath == null) throw new ArgumentNullException(nameof(filePath));
 
+			// TODO : !!!
 		}
 
 		public void Load(FileInfo filePath)
 		{
 			if (filePath == null) throw new ArgumentNullException(nameof(filePath));
 
+			// TODO : !!!
 		}
 	}
 }

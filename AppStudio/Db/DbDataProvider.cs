@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using AppClient.Core.Data;
+using AtosClient.Data;
 
 namespace AppStudio.Db
 {

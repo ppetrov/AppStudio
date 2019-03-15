@@ -71,6 +71,7 @@ namespace AppStudio.Generators
 			if (config == null) throw new ArgumentNullException(nameof(config));
 
 			var entityConfig = config.GetEntityConfig(table.Name);
+
 			var className = entityConfig.ClassName;
 			var properties = GetProperties(table, config, entityConfig);
 
@@ -84,11 +85,19 @@ namespace AppStudio.Generators
 			if (config == null) throw new ArgumentNullException(nameof(config));
 
 			var entityConfig = config.GetEntityConfig(table.Name);
+
 			var className = entityConfig.ClassName + @"Captions";
-			var properties = GetProperties(table, config, entityConfig)
-				.Where(v => !v.Column.IsPrimaryKey)
-				.Select(v => new Property(v.Column, MapType(SqlDataType.String), v.Name, v.ReferenceEntityConfig))
-				.ToList();
+
+			var properties = new List<Property>(table.Columns.Length);
+
+			foreach (var property in GetProperties(table, config, entityConfig))
+			{
+				if (property.Column.IsPrimaryKey) continue;
+
+				var captionProperty = new Property(property.Column, MapType(SqlDataType.String), property.Name, property.ReferenceEntityConfig);
+
+				properties.Add(captionProperty);
+			}
 
 			GenerateClass(buffer, className, properties, AppendConstructor);
 		}
@@ -100,6 +109,7 @@ namespace AppStudio.Generators
 			if (config == null) throw new ArgumentNullException(nameof(config));
 
 			var entityConfig = config.GetEntityConfig(table.Name);
+
 			var modelClassName = entityConfig.ClassName;
 			var captionsClassName = modelClassName + @"Captions";
 			var className = modelClassName + @"ViewModel";
@@ -124,6 +134,7 @@ namespace AppStudio.Generators
 			if (config == null) throw new ArgumentNullException(nameof(config));
 
 			var entityConfig = config.GetEntityConfig(table.Name);
+
 			var className = entityConfig.ClassName;
 			var properties = GetProperties(table, config, entityConfig);
 
@@ -140,10 +151,8 @@ namespace AppStudio.Generators
 			// Entries
 			foreach (var property in properties)
 			{
-				if (property.Column.IsPrimaryKey)
-				{
-					continue;
-				}
+				if (property.Column.IsPrimaryKey) continue;
+
 				buffer.Append(property.Name);
 				buffer.Append(@",");
 				buffer.AppendLine();
@@ -265,6 +274,7 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 			if (config == null) throw new ArgumentNullException(nameof(config));
 
 			var entityConfig = config.GetEntityConfig(table.Name);
+
 			var className = entityConfig.ClassName + @"Parameters";
 
 			GenerateClass(buffer, className, new List<Property>(0), null);
@@ -282,10 +292,10 @@ public static Dictionary<{5}, {0}> Get{1}(IDbContext dbContext, DataCache cache)
 			buffer.AppendLine(@"{");
 			buffer.AppendLine(@"return new[]");
 			buffer.AppendLine(@"{");
+
 			var entityConfig = config.GetEntityConfig(table.Name);
 			var properties = GetProperties(table, config, entityConfig);
-			Generate(buffer, properties,
-				p => string.Format(@"this.{0}Option,", p.Name, p.Name));
+			Generate(buffer, properties, p => $@"this.{p.Name}Option,");
 
 			buffer.AppendLine(@"};");
 			buffer.AppendLine(@"}");
@@ -470,10 +480,14 @@ return cmp;
 			// Properties
 			AppendProperties(buffer, properties);
 
-			buffer.AppendLine();
+			if (constructor != null)
+			{
+				// Empty line
+				buffer.AppendLine();
 
-			// Constructor
-			constructor?.Invoke(buffer, properties, className);
+				// Constructor
+				constructor?.Invoke(buffer, properties, className);
+			}
 
 			buffer.AppendLine(@"}");
 		}

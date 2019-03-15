@@ -1,20 +1,14 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Data.SQLite;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using AppClient.Core.Cache;
-using AppClient.Core.Services;
-using AppStudio;
 using AppStudio.Config;
 using AppStudio.Data;
 using AppStudio.Db;
 using AppStudio.Generators;
+using AtosClient.Cache;
 
 namespace DemoClient
 {
@@ -24,19 +18,9 @@ namespace DemoClient
 
 		static void Main(string[] args)
 		{
-			var sl = new ServiceLocator();
-
-
-			//GenerateObjectDumper();
-			return;
-			//CheckAllPages();
-			//return;
-			//Generate();
-			//return;
-
 			var path = @"C:\Users\PetarPetrov\AppData\Local\Packages\9ed4bf97-9c34-45dc-a217-5f8121aa6dfc_7gbmn9e1bm2jj\LocalState\ifsa.sqlite";
 
-			path = @"C:\Users\PetarPetrov\Desktop\app_studio.sqlite";
+			//path = @"C:\Users\PetarPetrov\Desktop\app_studio.sqlite";
 
 			var projectConfig = new ProjectConfig();
 			projectConfig.Add(new EntityConfig(@"ACTIVATION_COMPLIANCES"));
@@ -53,72 +37,25 @@ namespace DemoClient
 
 			using (var dbContext = new DbContext(cnString))
 			{
-				//using (var localCtx = new DbContext(cnString))
-				//{
-				//	var eqs = EquipmentManager.GetEquipments(localCtx, new EquipmentsParameters(DateTime.Today));
-				//	foreach (var e in eqs)
-				//	{
-				//		Console.WriteLine(e);
-				//	}
-				//}
-
-				var tables = DataProvider.GetTables(dbContext).Where(t => t.Name.IndexOf(@"Equipment", StringComparison.OrdinalIgnoreCase) >= 0);
-
-				foreach (var table in tables)
+				foreach (var table in DataProvider.GetTables(dbContext))
 				{
 					if (table.Name.Contains('$') ||
 						table.Name.IndexOf(@"Asset_Class", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						table.Name.IndexOf(@"open_balance", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						table.Name.IndexOf(@"factory_cal", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						table.Name.IndexOf(@"Visit_dat", StringComparison.OrdinalIgnoreCase) >= 0 ||
-						//table.Name.IndexOf(@"Equipment", StringComparison.OrdinalIgnoreCase) >= 0 ||
+						table.Name.IndexOf(@"Equipment", StringComparison.OrdinalIgnoreCase) >= 0 ||
 						table.Name.IndexOf(@"Temp_data", StringComparison.OrdinalIgnoreCase) >= 0)
 					{
 						continue;
 					}
 
-					//Console.WriteLine(table.Name);
-					//foreach (var column in table.Columns)
-					//{
-					//	var fk = string.Empty;
-					//	if (column.ForeignKey != null)
-					//	{
-					//		fk = $@"{column.ForeignKey.TableName}({column.ForeignKey.ColumnName})";
-					//	}
-					//	Console.WriteLine("\t" + column.Name + @":" + column.Type + @" ->" + column.IsPrimaryKey + @", " + fk);
-					//}
-					//Console.WriteLine();
 
-					var buffer = new StringBuilder();
-
-					//var config = projectConfig.GetEntityConfig(table.Name);
-					//Console.WriteLine(config.ClassName);
-					//Console.WriteLine(config.ClassPluralName);
-					//Console.WriteLine();
-
-					//buffer.Clear();
-					//SqlGenerator.Select(buffer, table, tableConfig);
-					//Console.WriteLine(buffer.ToString());
-					//Console.WriteLine();
-
-					//buffer.Clear();
-					//SqlGenerator.Insert(buffer, table, tableConfig);
-					//Console.WriteLine(buffer.ToString());
-					//Console.WriteLine();
-
-					//buffer.Clear();
-					//SqlGenerator.Update(buffer, table, tableConfig);
-					//Console.WriteLine(buffer.ToString());
-					//Console.WriteLine();
-
-					//buffer.Clear();
-					//SqlGenerator.Delete(buffer, table, tableConfig);
-					//Console.WriteLine(buffer.ToString());
-					//Console.WriteLine();
+					var buffer = new StringBuilder(4 * 1024);
 
 					buffer.Clear();
-					//CodeGenerator.GenerateClass(buffer, table, projectConfig);
-					//buffer.AppendLine();
+					CodeGenerator.GenerateClass(buffer, table, projectConfig);
+					buffer.AppendLine();
 					//CodeGenerator.GenerateCaptionsClass(buffer, table, projectConfig);
 					//buffer.AppendLine();
 					//CodeGenerator.GenerateViewModel(buffer, table, projectConfig);
@@ -135,8 +72,8 @@ namespace DemoClient
 					//buffer.AppendLine();
 					//CodeGenerator.GenerateIsTextMatchMethod(buffer, table, projectConfig);
 					//buffer.AppendLine();
-					CodeGenerator.GenerateSortMethod(buffer, table, projectConfig);
-					buffer.AppendLine();
+					//CodeGenerator.GenerateSortMethod(buffer, table, projectConfig);
+					//buffer.AppendLine();
 
 
 					Console.WriteLine();
@@ -146,8 +83,6 @@ namespace DemoClient
 
 					buffer.Clear();
 					CodeGenerator.GenerateGetAll(buffer, table, projectConfig);
-					//Console.WriteLine(buffer.ToString());
-					//Console.WriteLine();
 
 					dataProvider.AppendLine(buffer.ToString());
 
@@ -155,8 +90,6 @@ namespace DemoClient
 					//register.AppendLine($@"Console.WriteLine(DataProviders.Get{projectConfig.GetEntityConfig(table.Name).ClassPluralName}(dbContext, cache).Count);");
 
 					register.AppendLine($@"s.Add(""{table.Name}"", DataProviders.Get{projectConfig.GetEntityConfig(table.Name).ClassPluralName}(dbContext, cache).Count);");
-
-					//code.AppendLine(buffer.ToString());
 				}
 
 
@@ -231,81 +164,12 @@ namespace DemoClient
 
 		}
 
-		private static void GenerateObjectDumper()
+		private static void Display(int[] numbers, int count)
 		{
-			var input = @"
-
-short Prob2Temparature
-
-short Prob1Temparature
-
-bool PowerStatus
-
-NSNumber MovementTime
-
-NSNumber ModuleActivity
-
-NSNumber LastErrorTime
-
-float Humidity
-
-kEventType EventType
-
-NSNumber EventTime
-
-NSNumber EventID
-
-float EvaporatorTemparature
-
-int ErrorCode
-
-bool DoorStatus
-
-bool DoorOperationTimeOut
-
-NSNumber DoorOpenTime
-
-int DoorOpenDuration
-
-NSDictionary DictDetailParams
-
-NSDictionary DictData
-
-float CoolerVoltage
-
-float CondensorTemparature
-
-int BatteryLevel
-
-int AmbientLight
-
-NSNumber ActivityData
-
-NSNumber SerialNumber
-
-float Temparature
-".Trim();
-
-			var lines = input.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries)
-				.Select(v => v.Trim())
-				.Where(v => !string.IsNullOrWhiteSpace(v))
-				.ToList();
-
-			var result = "";
-
-			foreach (var line in lines)
+			for (var i = 0; i < count; i++)
 			{
-				var s = line.IndexOf(' ');
-				var name = line.Substring(s + 1);
-
-
-				//buffer.Append(@"Name:");
-				//buffer.AppendLine(data.Description);
-
-				result += $@"buffer.Append(@""{name}:"");" + Environment.NewLine;
-				result += $@"buffer.AppendLine(Convert.ToString(data.{name}));" + Environment.NewLine;
+				Console.WriteLine(numbers[i]);
 			}
-
 		}
 
 		private static void CheckAllPages()

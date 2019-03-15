@@ -14,8 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="AppClient.Core">
-      <HintPath>..\..\AppClient\AppClient.Core\bin\Debug\netstandard2.0\AppClient.Core.dll</HintPath>
+    <Reference Include="AtosClient">
+      <HintPath>..\..\AtosClient\AtosClient\AtosClient\bin\Release\netstandard2.0\AtosClient.dll</HintPath>
     </Reference>
   </ItemGroup>
 

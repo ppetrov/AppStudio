@@ -1,5 +1,7 @@
 using System;
-using AppClient.Core.ViewModels;
+using System.Collections.Generic;
+using AtosClient.Sort;
+using AtosClient.ViewModels;
 
 namespace AppStudio
 {
@@ -53,7 +55,8 @@ namespace AppStudio
 
 	public sealed class ArticleViewModel : ViewModel
 	{
-		public Article Article { get; }
+		public Article Model { get; }
+
 		public string Name { get; }
 		public string NameCaption { get; }
 		public string Brand { get; }
@@ -70,7 +73,7 @@ namespace AppStudio
 			if (article == null) throw new ArgumentNullException(nameof(article));
 			if (captions == null) throw new ArgumentNullException(nameof(captions));
 
-			this.Article = article;
+			this.Model = article;
 			this.Name = article.Name;
 			this.NameCaption = captions.Name;
 			this.Brand = article.Brand.ToString();
@@ -261,8 +264,70 @@ namespace AppStudio
 	}
 	public sealed class FlavorParameters
 	{
+		private static void Sort(List<ArticleViewModel> viewModels, SortOption sortOption, ArticleProperty property)
+		{
+			switch (property)
+			{
+				case ArticleProperty.Name:
+					viewModels.Sort((x, y) => string.Compare(x.Name, y.Name, StringComparison.OrdinalIgnoreCase));
+					break;
+				case ArticleProperty.Brand:
+					viewModels.Sort((x, y) => 
+					{
+						var cmp = x.Brand.CompareTo(y.Brand);
+						if (cmp == 0)
+						{
+							cmp = x.Model.Id.CompareTo(y.Model.Id);
+						}
+						return cmp;
+					});
+					break;
+				case ArticleProperty.Flavor:
+					viewModels.Sort((x, y) => 
+					{
+						var cmp = x.Flavor.CompareTo(y.Flavor);
+						if (cmp == 0)
+						{
+							cmp = x.Model.Id.CompareTo(y.Model.Id);
+						}
+						return cmp;
+					});
+					break;
+				case ArticleProperty.ValidFrom:
+					viewModels.Sort((x, y) => 
+					{
+						var cmp = x.Model.ValidFrom.CompareTo(y.Model.ValidFrom);
+						if (cmp == 0)
+						{
+							cmp = x.Model.Id.CompareTo(y.Model.Id);
+						}
+						return cmp;
+					});
+					break;
+				case ArticleProperty.ValidTo:
+					viewModels.Sort((x, y) => 
+					{
+						var cmp = x.Model.ValidTo.CompareTo(y.Model.ValidTo);
+						if (cmp == 0)
+						{
+							cmp = x.Model.Id.CompareTo(y.Model.Id);
+						}
+						return cmp;
+					});
+					break;
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
+
+			if ((sortOption.SortDirection ?? SortDirection.Asc) == SortDirection.Desc)
+			{
+				viewModels.Reverse();
+			}
+		}
 
 	}
+
+
 
 
 }

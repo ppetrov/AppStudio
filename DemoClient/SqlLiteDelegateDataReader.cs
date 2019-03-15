@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Data.SQLite;
-using AppClient.Core.Data;
+using AtosClient.Data;
 
 namespace DemoClient
 {
